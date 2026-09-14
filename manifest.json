@@ -1,0 +1,15 @@
+{
+  "name": "Fluidez lectora",
+  "short_name": "Fluidez",
+  "description": "Mide palabras correctas por minuto escuchando una lectura en voz alta. Funciona sin internet.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1efe9",
+  "theme_color": "#13303a",
+  "lang": "es",
+  "icons": [
+    { "src": "icono.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

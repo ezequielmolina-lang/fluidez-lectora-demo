@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fluidez lectora automatizada · Banco de pruebas</title>
 <meta name="description" content="Prototipo abierto que puntúa la fluidez lectora en español con reconocimiento de voz, y que muestra cuánto se equivoca.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#13303a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icono.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -118,6 +124,24 @@ audio{max-width:100%}
   Es un banco de pruebas. Todo lo que se muestra se midió con voz adulta y sintetizada:
   <b>nunca se probó con niños peruanos</b>. Para que sirva hace falta entrenarlo y validarlo con grabaciones
   de niños del Perú, incluyendo español andino y amazónico. Esa es la pieza que falta.
+</div>
+
+
+<div class="card" style="background:var(--ink);color:#e9efe6;border:none;margin:0 0 34px">
+  <div style="font:700 10.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--gold);
+    margin-bottom:10px">Cuánto cuesta</div>
+  <div style="font:500 27px/1.2 var(--serif);color:#fff;margin-bottom:14px">Cero, y no es una promesa
+  comercial: es una propiedad de la licencia.</div>
+  <p style="color:rgba(240,238,230,.92);margin-bottom:10px">Los dos modelos son de <b style="color:#fff">pesos
+  abiertos</b>, con licencias MIT y Apache 2.0, y corren <b style="color:#fff">en la propia computadora o en un
+  teléfono</b>. No hay clave de servicio, no hay tarifa por estudiante, no hay proveedor al que pagarle, y
+  <b style="color:#fff">el audio no sale del dispositivo</b>. Del orden de 460 horas de procesador por cada
+  100.000 estudiantes, en una máquina común y sin placa de video.</p>
+  <p style="color:rgba(240,238,230,.78);font-size:14px;margin-bottom:0"><b style="color:rgba(255,255,255,.9)">Lo
+  que sí sigue costando</b>, dicho de frente: el tiempo de quien se sienta con el niño, que es el que ya se
+  gasta hoy y que con esto se gasta menos, porque el evaluador deja de cronometrar y de contar. Una vez, unas
+  horas de máquina para ajustar el modelo. Y alguien que lo mantenga, porque un modelo abierto no se mantiene
+  solo.</p>
 </div>
 
 <!-- ============ 1. POR QUE IMPORTA ============ -->
@@ -273,7 +297,7 @@ audio{max-width:100%}
       <td>Acierto por ítem, contra <b>86,11% de acuerdo entre dos humanos</b></td>
       <td class="num">91,97%</td></tr>
     <tr><td><b><a href="https://huggingface.co/AI-for-Education/sw-tz-child-egra-fastconformer-ctc-110m" target="_blank" rel="noopener">Tanzania</a></b><br><span class="chico">kiswahili infantil</span></td>
-      <td>Error de transcripción. <b>No midieron acuerdo con humanos</b></td>
+      <td>Error de transcripción. <b>La ficha del modelo no reporta acuerdo con evaluadores humanos</b></td>
       <td class="num">WER 16,8%</td></tr>
   </table>
 
@@ -611,6 +635,17 @@ function pintar(destino, marcado){
            if (m.oido && m.op === "sustitucion") s.title = "se oyó: " + m.oido; }
     cont.append(s, document.createTextNode(" "));
   });
+}
+</script>
+<script>
+/* Registrar el service worker: sin esto la app no abre sin señal.
+ * El error NO se silencia: si falla hay que poder verlo en la consola. Algunos navegadores
+ * embebidos bloquean los service workers, y ahi la pagina sigue funcionando pero sin la
+ * parte de trabajar sin conexion. */
+if ("serviceWorker" in navigator) {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js")
+    .then(r => console.info("[fluidez] modo sin conexión listo, alcance:", r.scope))
+    .catch(e => console.warn("[fluidez] sin modo offline:", e.message)));
 }
 </script>
 </body>
