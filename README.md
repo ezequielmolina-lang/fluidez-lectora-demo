@@ -69,13 +69,6 @@ casi siempre. Están incluidas para medir cuánto falta, no para simular que ya 
    ven idénticos en la salida del reconocedor y significan lo contrario, así que la regla de
    corte **solo se aplica después de verificar que hubo habla**.
 
-## Lo que no está acá
-
-El banco de pruebas completo, con el motor de escritorio (Whisper y wav2vec2 con alineación
-forzada), los experimentos, los estímulos generados y la documentación del método, está en un
-repositorio aparte todavía sin publicar. Se publica junto con la primera medición contra un
-panel de evaluadores humanos, para que el código y el resultado salgan juntos.
-
 ## Licencia
 
 El código de este repositorio está bajo **[licencia MIT](LICENSE)**: se puede usar, copiar,
