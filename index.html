@@ -49,6 +49,12 @@ a{color:var(--teal)}
 .dato b{display:block;font:600 33px/1 var(--serif);color:var(--ink2);letter-spacing:-.03em;margin-bottom:7px}
 .dato b small{font:400 12.5px var(--sans);color:var(--muted);letter-spacing:0}
 .dato span{display:block;font-size:12.5px;color:#5b6570;line-height:1.42}
+/* sin esto, un <b> dentro de la tarjeta hereda la serif de 33px del numero, la tarjeta
+   crece y las de al lado quedan vacias. Mismo defecto que ya habia aparecido en el PDF. */
+.dato span b,.dato span strong{display:inline;font:inherit;font-weight:700;color:var(--ink2);
+  letter-spacing:normal;margin:0}
+.grid3{align-items:stretch}
+.dato{display:flex;flex-direction:column}
 
 /* tablas */
 table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
@@ -124,8 +130,8 @@ audio{max-width:100%}
   momento más temprano en que el problema se ve, y el último en que corregirlo es barato.</p>
 
   <div class="grid3">
-    <div class="dato r"><b>56%</b><span>De los niños peruanos <b>no alcanza la competencia lectora esperada a
-      los 10 años</b></span></div>
+    <div class="dato r"><b>56%</b><span>De los niños peruanos <b>no lee ni comprende un texto simple a los 10
+      años</b></span></div>
     <div class="dato t"><b>+4,8 pp</b><span>Por encima del promedio de América Latina y el Caribe</span></div>
     <div class="dato t"><b>+23,3 pp</b><span>Por encima del promedio de los países de ingreso medio alto</span></div>
   </div>
