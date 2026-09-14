@@ -261,6 +261,33 @@ audio{max-width:100%}
       <td>Error de transcripción. <b>No midieron acuerdo con humanos</b></td>
       <td class="num">WER 16,8%</td></tr>
   </table>
+
+  <h2 style="margin-top:32px">¿Y qué tan lejos está esto del mejor resultado conocido?</h2>
+  <p>La pregunta correcta, y la respuesta es incómoda. <b>El patrón de oro es coincidir con un evaluador
+  humano</b>, y el mejor resultado publicado es el de Ghana. Esto es lo que se puede comparar y lo que no:</p>
+  <table>
+    <tr><th></th><th>Ghana, el mejor conocido</th><th>Este prototipo</th></tr>
+    <tr><td><b>Contra qué se comparó</b></td>
+        <td>Evaluadores humanos expertos</td>
+        <td>Una verdad sintética <b>que fabricamos nosotros</b></td></tr>
+    <tr><td><b>Sobre qué grabaciones</b></td>
+        <td>Cientos, de aula real, con acentos regionales</td>
+        <td><b>Una</b>, de voz sintetizada</td></tr>
+    <tr class="destacada"><td><b>Correlación con el humano</b></td>
+        <td class="num">0,964</td>
+        <td class="num" style="color:var(--rojo)">no medida</td></tr>
+    <tr><td><b>Diferencia media por lectura</b></td>
+        <td class="num">5 ppm</td>
+        <td class="num">4,5 y 4,3 <span class="chico" style="font-weight:400">en un solo caso</span></td></tr>
+  </table>
+  <div class="card" style="border-left:4px solid var(--rojo)">
+    <p style="margin-bottom:0">No estamos ni cerca ni lejos del patrón de oro: <b>todavía no estamos en la
+    misma escala</b>, porque este sistema <b>nunca se comparó con un evaluador humano</b>. Los 4,5 puntos de
+    error que se ven arriba salen de una grabación sintética cuyos errores pusimos nosotros, y eso no es lo
+    mismo que acertarle a un niño de verdad. <b>Cerrar esa distancia es exactamente el paso que falta</b>, y
+    para darlo hacen falta grabaciones de niños peruanos con la hoja del evaluador al lado.</p>
+  </div>
+
   <p class="fuente">El de Ghana es la vara más exigente porque se hizo con grabaciones de aula real, acentos
   regionales y el modelo sacado de la caja. Ese mismo estudio reporta <b>sesgo del modelo contra acentos
   subrepresentados</b>, que es exactamente la preocupación con quechua y aimara.</p>
