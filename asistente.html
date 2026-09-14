@@ -139,6 +139,20 @@ a{color:var(--teal)}
   .hoja .cerrar{display:none}
   .hoja .items{font-size:26px}
 }
+
+/* modo de a uno: un item por vez, grande, para pantalla chica */
+.hoja .modo{display:flex;gap:6px;margin:0 auto 14px;max-width:900px}
+.hoja .modo button{flex:1;font:600 13px var(--sans);padding:9px;border-radius:9px;cursor:pointer;
+  border:1.5px solid var(--line);background:transparent;color:var(--muted)}
+.hoja .modo button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.uno{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:58vh;cursor:pointer;user-select:none}
+.uno .it{font:clamp(72px,26vw,180px)/1 var(--sans);color:#000;letter-spacing:-.02em}
+.uno .cuenta{font:600 13px var(--mono);color:var(--muted);letter-spacing:.1em;margin-top:26px}
+.uno .pista{font-size:13px;color:var(--muted);margin-top:8px}
+.volver{background:transparent;border:1.5px solid var(--line);border-radius:9px;color:var(--teal);
+  font:600 13px var(--sans);padding:8px 14px;margin-top:14px;cursor:pointer}
+@media print{ .hoja .modo,.volver{display:none} }
 </style>
 </head>
 <body>
@@ -154,6 +168,10 @@ a{color:var(--teal)}
     <b id="hoja-tit"></b>
     <span><button class="btn borde chico" id="btn-imprimir" style="margin:0">Imprimir</button>
     <button class="btn chico" id="btn-cerrar-hoja" style="margin:0">Listo</button></span>
+  </div>
+  <div class="modo oculto" id="hoja-modo">
+    <button id="m-hoja" class="on">Hoja completa</button>
+    <button id="m-uno">De a uno</button>
   </div>
   <div id="hoja-items"></div>
 </div>
@@ -187,6 +205,10 @@ a{color:var(--teal)}
     <div class="nota oculto" id="nota-descarga">Preparando el reconocedor. Se descarga una sola vez y después
     funciona sin señal.</div>
     <button class="btn borde chico" id="btn-hoja">Mostrar la hoja del estudiante</button>
+    <div class="nota oculto" id="aviso-modo"><b>Modo «de a uno» activado.</b> Se lee mejor en un teléfono y
+    deja cada ítem con su audio limpio, pero el ritmo lo marca el dedo y se pierde el barrido visual: este
+    puntaje <b>no se compara con las normas</b> ni con una aplicación en hoja completa. Queda registrado como
+    tal.</div>
   </div>
 
   <!-- 3. revisar -->
@@ -350,13 +372,54 @@ function pintarLectura(){
 /* En el papel son DOS hojas: la del chico y la del evaluador. Con un solo telefono el chico
  * leeria de la misma pantalla donde despues aparecen las palabras tachadas. Esta vista es la
  * hoja del chico, y se imprime, que es como conviene aplicarlo de verdad. */
-function abrirHoja(){
-  document.getElementById("hoja-tit").textContent = NOMBRE[actual.tarea];
+/* DOS MODOS, Y NO MIDEN LO MISMO.
+ *
+ * "Hoja completa" es el instrumento: los cien items a la vista, el chico barre con la vista y
+ * lee los que alcanza en un minuto. El puntaje se compara con las normas publicadas, que se
+ * construyeron asi.
+ *
+ * "De a uno" es la version digital: un item gigante por pantalla y el chico toca para
+ * avanzar. En un telefono se lee mucho mejor, no hay que llevar el renglon con el dedo, y
+ * cada item queda con su audio limpio, que es la etiqueta mas util para entrenar. Es lo que
+ * hace SARA en Republica Dominicana, y no por casualidad SARA reporta ACIERTO POR ITEM y no
+ * palabras por minuto.
+ *
+ * Lo que se pierde: el barrido visual, que es parte de lo que la tarea mide, y el ritmo lo
+ * marca el dedo, asi que el tiempo deja de ser comparable. Por eso el modo queda guardado con
+ * cada aplicacion: un puntaje "de a uno" NO se compara contra los 74 ppm de Antioquia ni
+ * contra ninguna norma. */
+const CLAVE_MODO = "fluidez.modo.v1";
+let modoUno = false;
+try { modoUno = localStorage.getItem(CLAVE_MODO) === "uno"; } catch {}
+let idxUno = 0;
+
+function pintarHoja(){
   const c = document.getElementById("hoja-items");
-  c.className = actual.esPorItem ? "items" : "corrido";
-  c.style.gridTemplateColumns = actual.esPorItem
-    ? "repeat(" + COLUMNAS[actual.tarea] + ",1fr)" : "";
   c.innerHTML = "";
+  c.style.gridTemplateColumns = "";
+
+  if (actual.esPorItem && modoUno) {
+    c.className = "uno";
+    const it = document.createElement("div");
+    it.className = "it"; it.textContent = actual.palabras[idxUno];
+    const n = document.createElement("div");
+    n.className = "cuenta"; n.textContent = (idxUno + 1) + " / " + actual.palabras.length;
+    const p = document.createElement("div");
+    p.className = "pista"; p.textContent = idxUno ? "Tocá para el siguiente" : "Tocá la pantalla para avanzar";
+    c.append(it, n, p);
+    if (idxUno) {
+      const v = document.createElement("button");
+      v.className = "volver"; v.textContent = "Volver uno";
+      v.onclick = ev => { ev.stopPropagation(); idxUno--; pintarHoja(); };
+      c.append(v);
+    }
+    c.onclick = () => { if (idxUno < actual.palabras.length - 1) { idxUno++; pintarHoja(); } };
+    return;
+  }
+
+  c.onclick = null;
+  c.className = actual.esPorItem ? "items" : "corrido";
+  if (actual.esPorItem) c.style.gridTemplateColumns = "repeat(" + COLUMNAS[actual.tarea] + ",1fr)";
   actual.palabras.forEach(w => {
     if (actual.esPorItem) {
       const s = document.createElement("span");
@@ -364,9 +427,33 @@ function abrirHoja(){
       c.append(s);
     } else c.append(document.createTextNode(w + " "));
   });
+}
+
+function abrirHoja(){
+  document.getElementById("hoja-tit").textContent = NOMBRE[actual.tarea];
+  /* El pasaje no se lee de a una palabra: eso no es leer. El modo solo existe para las
+     cuatro subtareas de items sueltos. */
+  document.getElementById("hoja-modo").classList.toggle("oculto", !actual.esPorItem);
+  idxUno = 0;
+  pintarModo();
+  pintarHoja();
   document.getElementById("hoja").classList.add("abierta");
 }
 
+function pintarModo(){
+  $("#m-hoja").classList.toggle("on", !modoUno);
+  $("#m-uno").classList.toggle("on", modoUno);
+  $("#aviso-modo").classList.toggle("oculto", !(modoUno && actual && actual.esPorItem));
+}
+
+function cambiarModo(uno){
+  modoUno = uno; idxUno = 0;
+  try { localStorage.setItem(CLAVE_MODO, uno ? "uno" : "hoja"); } catch {}
+  pintarModo(); pintarHoja();
+}
+
+$("#m-hoja").onclick = () => cambiarModo(false);
+$("#m-uno").onclick = () => cambiarModo(true);
 $("#btn-hoja").onclick = abrirHoja;
 $("#btn-cerrar-hoja").onclick = () => document.getElementById("hoja").classList.remove("abierta");
 $("#btn-imprimir").onclick = () => print();
@@ -508,6 +595,7 @@ $("#btn-guardar").onclick = () => {
     codigo: $("#est-cabecera").textContent,
     estimulo: actual.id,
     tarea: actual.tarea,
+    modo: (actual.esPorItem && modoUno) ? "de_a_uno" : "hoja_completa",
     fecha: new Date().toISOString(),
     duracion: +resultado.duracion.toFixed(1),
     segundos: +seg.toFixed(2),
@@ -571,7 +659,7 @@ function bajar(nombre, texto, tipo){
 $("#btn-csv").onclick = () => {
   const todos = leer();
   if (!todos.length) return;
-  const cols = ["codigo","estimulo","tarea","fecha","duracion","segundos","pcpm_humano",
+  const cols = ["codigo","estimulo","tarea","modo","fecha","duracion","segundos","pcpm_humano",
                 "correctas_humano","estado_humano","pcpm_maquina","correctas_maquina",
                 "estado_maquina","correcciones"];
   const csv = [cols.join(",")].concat(
