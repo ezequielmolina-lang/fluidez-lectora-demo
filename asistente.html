@@ -111,6 +111,34 @@ td.n{font:700 14px var(--mono);color:var(--ink2);white-space:nowrap}
 .vacio{font-size:13.5px;color:var(--muted);padding:6px 0}
 .pie{font-size:12px;color:var(--muted);line-height:1.5;margin-top:16px}
 a{color:var(--teal)}
+
+/* LA HOJA DEL ESTUDIANTE.
+ *
+ * En EGRA de papel hay DOS hojas: la del chico, limpia y con letra grande, y la del
+ * evaluador, donde se marca. Con un solo telefono eso se pierde, y el chico terminaria
+ * leyendo de la misma pantalla donde ya hay palabras tachadas en rojo. Esta vista es la
+ * hoja del chico: los items solos, grandes, sin ninguna marca. Y se imprime, que es como
+ * conviene aplicarlo de verdad. */
+.hoja{position:fixed;inset:0;z-index:50;background:#fff;overflow:auto;padding:16px;display:none}
+.hoja.abierta{display:block}
+.hoja .items{display:grid;gap:6px;text-align:center;font:clamp(20px,5.2vw,40px)/1.25 var(--sans);color:#000;
+  max-width:900px;margin:0 auto}
+.hoja .items span{padding:6px 2px}
+.hoja .corrido{font:clamp(21px,4.4vw,34px)/1.9 var(--sans);color:#000;max-width:900px;margin:0 auto}
+.hoja .cerrar{position:sticky;top:0;display:flex;gap:10px;justify-content:space-between;align-items:center;
+  background:#fff;padding-bottom:10px;margin-bottom:6px;max-width:900px;margin-inline:auto}
+.hoja .cerrar b{font:600 13px var(--sans);color:var(--muted)}
+/* los botones de la app son de ancho completo; aca van al lado, no apilados */
+.hoja .cerrar .btn{width:auto;display:inline-flex}
+.hoja .cerrar span{display:flex;gap:8px}
+.btn.borde{background:transparent;color:var(--teal);border:1.5px solid var(--line);margin-top:10px}
+
+@media print{
+  body>*{display:none!important}
+  .hoja{display:block!important;position:static;padding:0}
+  .hoja .cerrar{display:none}
+  .hoja .items{font-size:26px}
+}
 </style>
 </head>
 <body>
@@ -119,6 +147,16 @@ a{color:var(--teal)}
   <h1>Asistente de fluidez lectora</h1>
   <span class="est" id="est-cabecera"></span>
 </div></header>
+
+<!-- la hoja que mira el chico: sin marcas, letra grande, imprimible -->
+<div class="hoja" id="hoja">
+  <div class="cerrar">
+    <b id="hoja-tit"></b>
+    <span><button class="btn borde chico" id="btn-imprimir" style="margin:0">Imprimir</button>
+    <button class="btn chico" id="btn-cerrar-hoja" style="margin:0">Listo</button></span>
+  </div>
+  <div id="hoja-items"></div>
+</div>
 
 <div class="wrap">
 
@@ -148,6 +186,7 @@ a{color:var(--teal)}
     <div class="barra oculto" id="barra"><div id="barra-in"></div></div>
     <div class="nota oculto" id="nota-descarga">Preparando el reconocedor. Se descarga una sola vez y después
     funciona sin señal.</div>
+    <button class="btn borde chico" id="btn-hoja">Mostrar la hoja del estudiante</button>
   </div>
 
   <!-- 3. revisar -->
@@ -292,12 +331,45 @@ function pintarPalabras(cont, marcas, alTocar){
 }
 
 function pintarLectura(){
-  $("#consigna").innerHTML = CONSIGNA[actual.tarea];
+  /* Las cuatro subtareas por item muestran TODOS los items a la vez, de a diez por fila, que
+     es como esta hecho el instrumento: el chico lee los que alcanza en un minuto y el resto
+     esta ahi para que el mas rapido no se quede sin. Decirlo evita que el evaluador crea que
+     el chico tiene que llegar al final. */
+  $("#consigna").innerHTML = CONSIGNA[actual.tarea]
+    + (actual.esPorItem
+        ? ' <span style="color:var(--muted)">Tiene <b>un minuto</b>: no hace falta que llegue al final.</span>'
+        : "");
   const av = $("#aviso-subtarea");
   av.textContent = AVISO[actual.tarea] || "";
   av.classList.toggle("oculto", !AVISO[actual.tarea]);
   pintarPalabras($("#pasaje-lectura"), null);
 }
+
+/* ---------------- la hoja del estudiante ---------------- */
+
+/* En el papel son DOS hojas: la del chico y la del evaluador. Con un solo telefono el chico
+ * leeria de la misma pantalla donde despues aparecen las palabras tachadas. Esta vista es la
+ * hoja del chico, y se imprime, que es como conviene aplicarlo de verdad. */
+function abrirHoja(){
+  document.getElementById("hoja-tit").textContent = NOMBRE[actual.tarea];
+  const c = document.getElementById("hoja-items");
+  c.className = actual.esPorItem ? "items" : "corrido";
+  c.style.gridTemplateColumns = actual.esPorItem
+    ? "repeat(" + COLUMNAS[actual.tarea] + ",1fr)" : "";
+  c.innerHTML = "";
+  actual.palabras.forEach(w => {
+    if (actual.esPorItem) {
+      const s = document.createElement("span");
+      s.textContent = w;
+      c.append(s);
+    } else c.append(document.createTextNode(w + " "));
+  });
+  document.getElementById("hoja").classList.add("abierta");
+}
+
+$("#btn-hoja").onclick = abrirHoja;
+$("#btn-cerrar-hoja").onclick = () => document.getElementById("hoja").classList.remove("abierta");
+$("#btn-imprimir").onclick = () => print();
 
 /* ---------------- descarga del modelo, en paralelo ---------------- */
 function empezarDescarga(){
