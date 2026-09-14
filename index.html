@@ -76,6 +76,24 @@ li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;bord
 footer{border-top:1px solid var(--line);margin-top:20px;padding:26px 0 60px;font-size:13px;color:var(--muted)}
 a{color:var(--teal)}
 .cita{border-left:3px solid var(--teal);padding:2px 0 2px 16px;margin:14px 0;font-size:15px;color:var(--ink2)}
+
+/* probalo con tu voz */
+.voz-ctl{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px}
+.btn{font:600 15px var(--sans);padding:13px 22px;border-radius:999px;border:none;background:var(--ink);
+  color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:9px}
+.btn:hover{filter:brightness(1.25)}
+.btn:disabled{background:#bdbdbd;cursor:not-allowed;filter:none}
+.btn[data-e="grabando"]{background:var(--rojo)}
+.pt{width:9px;height:9px;border-radius:50%;background:#fff}
+.btn[data-e="grabando"] .pt{animation:late 1s infinite}
+@keyframes late{0%,100%{opacity:1}50%{opacity:.25}}
+.reloj{font:700 26px var(--mono);letter-spacing:-.03em;color:var(--ink2)}
+.reloj small{font:400 12px var(--sans);color:var(--muted)}
+.reloj.pasado{color:var(--rojo)}
+.estado{font-size:14px;color:var(--muted)}
+.barra{height:5px;background:var(--line);border-radius:3px;margin-top:14px;overflow:hidden}
+#barra-in{height:100%;width:0;background:var(--teal);transition:width .2s}
+#pasaje-voz{font:19px/1.95 var(--sans);margin-top:18px}
 </style>
 </head>
 <body>
@@ -128,6 +146,37 @@ a{color:var(--teal)}
     <div class="pie" id="proc"></div>
   </div>
   <audio id="au" preload="metadata"></audio>
+</section>
+
+<section>
+  <div class="card" id="tarjeta-voz">
+    <h3>Probalo vos</h3>
+    <h2>Leé el pasaje en voz alta y mirá qué entiende</h2>
+    <p style="max-width:660px">El modelo se descarga una sola vez y <b>corre dentro de tu navegador</b>: la
+    grabación no se sube a ningún servidor ni queda guardada en ninguna parte. Después de la primera vez
+    funciona incluso sin internet.</p>
+
+    <div class="voz-ctl">
+      <button class="btn" id="btn-cargar">Activar el micrófono y descargar el modelo</button>
+      <button class="btn oculto" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar</span></button>
+      <div class="reloj oculto" id="reloj-voz">0<small> s</small></div>
+      <div class="estado" id="estado-voz"></div>
+    </div>
+    <div class="barra oculto" id="barra"><div id="barra-in"></div></div>
+
+    <div class="aviso" style="margin:18px 0 0;font-size:13.5px">
+      <b>El modelo que corre acá es mucho más chico</b> que el de la versión de escritorio, porque tiene que
+      caber en una descarga razonable, y corre uno solo en vez de dos. <b>Su puntaje no se compara con los de
+      arriba</b>: son modelos distintos sobre grabaciones distintas. Esto muestra el mecanismo, no el
+      rendimiento del sistema.
+    </div>
+
+    <div class="oculto" id="res-voz">
+      <div class="tres" id="tres-voz" style="margin-top:22px"></div>
+      <div id="pasaje-voz"></div>
+      <div class="pie" id="pie-voz"></div>
+    </div>
+  </div>
 </section>
 
 <section>
@@ -274,6 +323,8 @@ function numeros(){
 
 fetch("datos.json").then(r=>r.json()).then(d=>{
   D = d;
+  window.FLUDATOS = d;   // el modulo de "probalo con tu voz" lee de aca
+  window.dispatchEvent(new CustomEvent("datos-listos"));
   document.getElementById("au").src = d.audio;
   const sw = document.getElementById("sw");
   [[VERDAD,"La verdad"],[0,"Lo que dijo Whisper"],[1,"Lo que dijo wav2vec2"]].forEach(([v,t])=>{
@@ -282,6 +333,133 @@ fetch("datos.json").then(r=>r.json()).then(d=>{
   });
   numeros(); pintar();
 });
+</script>
+
+<script type="module">
+/* Probalo con tu voz. Todo corre en este navegador: la grabacion no sale del dispositivo. */
+import { cargarModelo, evaluar, Op } from "./motor.js";
+
+const $ = s => document.querySelector(s);
+let rec = null, trozos = [], t0 = 0, tick = null, listo = false;
+
+function estado(t) { $("#estado-voz").textContent = t; }
+
+$("#btn-cargar").onclick = async () => {
+  $("#btn-cargar").disabled = true;
+  $("#barra").classList.remove("oculto");
+  estado("Descargando el modelo, una sola vez...");
+  const vistos = {};
+  try {
+    await cargarModelo(p => {
+      if (p.status === "progress" && p.file) {
+        vistos[p.file] = p.progress || 0;
+        const vals = Object.values(vistos);
+        $("#barra-in").style.width = (vals.reduce((a, b) => a + b, 0) / vals.length) + "%";
+      } else if (p.status === "ready") $("#barra-in").style.width = "100%";
+    });
+  } catch (e) {
+    estado("No se pudo cargar el modelo: " + e.message);
+    $("#btn-cargar").disabled = false;
+    return;
+  }
+  listo = true;
+  $("#barra").classList.add("oculto");
+  $("#btn-cargar").classList.add("oculto");
+  $("#btn-grabar").classList.remove("oculto");
+  $("#reloj-voz").classList.remove("oculto");
+  estado("Listo. Apretá grabar y leé el pasaje de arriba en voz alta.");
+};
+
+function reloj() {
+  const s = (Date.now() - t0) / 1000;
+  $("#reloj-voz").innerHTML = s.toFixed(0) + "<small> s</small>";
+  $("#reloj-voz").classList.toggle("pasado", s > 60);
+  if (s > 70) detener();
+}
+
+async function arrancar() {
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { estado("No se pudo abrir el micrófono: " + e.message); return; }
+  trozos = [];
+  rec = new MediaRecorder(stream);
+  rec.ondataavailable = ev => trozos.push(ev.data);
+  rec.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    await procesar(new Blob(trozos, { type: "audio/webm" }));
+  };
+  rec.start(); t0 = Date.now(); tick = setInterval(reloj, 100);
+  $("#btn-grabar").dataset.e = "grabando"; $("#btxt").textContent = "Detener";
+  estado("Grabando. Leé el pasaje en voz alta.");
+  $("#res-voz").classList.add("oculto");
+}
+
+function detener() {
+  if (!rec || rec.state === "inactive") return;
+  clearInterval(tick); rec.stop();
+  $("#btn-grabar").dataset.e = ""; $("#btn-grabar").disabled = true; $("#btxt").textContent = "Grabar";
+  estado("Procesando en tu navegador...");
+}
+
+async function procesar(blob) {
+  const est = { palabras: window.FLUDATOS.estimulo.palabras, limite: 60 };
+  let r;
+  const t = performance.now();
+  try { r = await evaluar(blob, est); }
+  catch (e) { estado("Error al procesar: " + e.message); $("#btn-grabar").disabled = false; return; }
+  const tardo = ((performance.now() - t) / 1000).toFixed(1);
+  $("#btn-grabar").disabled = false;
+  estado(`Listo en ${tardo} s, sin salir de tu navegador.`);
+  mostrarVoz(r, tardo);
+}
+
+function mostrarVoz(r, tardo) {
+  $("#res-voz").classList.remove("oculto");
+
+  if (r.estado === "NO_EVALUABLE") {
+    $("#tres-voz").innerHTML = `<div class="n" style="grid-column:1/-1;border-top-color:var(--rojo)">
+      <div class="k">No evaluable</div>
+      <div class="g" style="font-size:26px">Sin medición</div>
+      <div class="d">${r.motivo}. <b>Esto no es un cero</b>: es la ausencia de una medición.
+      Un audio que no se pudo escuchar no puede puntuar peor que uno que sí.</div></div>`;
+    $("#pasaje-voz").innerHTML = "";
+    $("#pie-voz").textContent = `${r.duracion.toFixed(1)} s de audio, procesados en ${tardo} s.`;
+    return;
+  }
+
+  const heredadas = r.pares.filter(p => p.nota).length;
+  $("#tres-voz").innerHTML = `
+    <div class="n v"><div class="k">Tu lectura</div>
+      <div class="g">${r.pcpm}<small> por minuto</small></div>
+      <div class="d">${r.correctas} de ${r.intentadas} palabras, en ${r.segundos} s contados.</div></div>
+    <div class="n a"><div class="k">Modelo</div>
+      <div class="g" style="font-size:22px">whisper base</div>
+      <div class="d">Corriendo en tu navegador. Más chico que el del ejemplo de arriba.</div></div>
+    <div class="n b"><div class="k">Sinalefa</div>
+      <div class="g">${heredadas}<small> palabras</small></div>
+      <div class="d">Se fundieron con la vocal anterior y heredaron su veredicto.</div></div>`;
+
+  const cont = $("#pasaje-voz"); cont.innerHTML = "";
+  for (const p of r.pares) {
+    const s = document.createElement("span");
+    if (p.op === Op.INSERCION) {
+      s.className = "p insercion"; s.textContent = "[+" + p.palabraHip + "]";
+    } else {
+      s.className = "p " + p.op + (p.nota ? " heredada" : "");
+      s.textContent = window.FLUDATOS.estimulo.palabras[p.idxRef];
+      const partes = [];
+      if (p.op === Op.SUSTITUCION) partes.push("se oyó: " + p.palabraHip);
+      if (p.nota) partes.push(p.nota);
+      if (partes.length) s.title = partes.join(" · ");
+    }
+    cont.append(s, document.createTextNode(" "));
+  }
+  $("#pie-voz").textContent =
+    `${r.duracion.toFixed(1)} s de audio, procesados en ${tardo} s dentro de tu navegador. ` +
+    `La grabación no se subió a ningún lado y no queda guardada.`;
+}
+
+$("#btn-grabar").onclick = () => (rec && rec.state === "recording" ? detener() : arrancar());
 </script>
 </body>
 </html>
