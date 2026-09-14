@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluidez lectora automatizada · Banco de pruebas</title>
+<meta name="description" content="Prototipo abierto que puntúa la fluidez lectora en español con reconocimiento de voz, y que muestra cuánto se equivoca.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#13303a; --ink2:#16242f; --teal:#1a4a57; --gold:#c89a3c; --gold2:#a87d24;
+  --green:#186b43; --green-f:#e4f2ea; --ambar:#8f5a00; --ambar-f:#fcefd8;
+  --gris:#a8a8a8; --rojo:#a51f18; --rojo-f:#fbe9e8;
+  --cream:#f1efe9; --cream2:#FBFAF6; --line:#e2dcce; --body:#3a444d; --muted:#7c8590;
+  --sans:'Inter',system-ui,sans-serif; --serif:'Newsreader',Georgia,serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--cream);color:var(--body);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+
+header{background:var(--ink);color:#fff;padding:52px 0 44px;margin-bottom:34px}
+.eyebrow{font:700 10.5px var(--mono);letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+h1{font:500 40px/1.08 var(--serif);letter-spacing:-.02em;margin:14px 0 0}
+@media(max-width:600px){h1{font-size:30px}}
+header .sub{font:italic 400 18px/1.4 var(--serif);color:#a9c6d6;margin-top:14px;max-width:620px}
+
+.alerta{background:#fff8e6;border:1px solid #f0dfae;border-left:4px solid var(--gold2);
+  border-radius:8px;padding:16px 20px;margin-bottom:32px;font-size:14.5px;color:#5b4406;line-height:1.55}
+.alerta b{color:#3d2d05}
+
+h2{font:500 25px/1.15 var(--serif);color:var(--ink2);letter-spacing:-.015em;margin:0 0 6px}
+h3{font:700 10.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);margin:0 0 8px}
+p{margin:0 0 12px;font-size:15.5px}
+section{margin-bottom:40px}
+.card{background:var(--cream2);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:18px}
+
+/* tres puntajes */
+.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 22px}
+@media(max-width:640px){.tres{grid-template-columns:1fr}}
+.n{background:var(--cream2);border:1px solid var(--line);border-top:4px solid var(--line);border-radius:10px;padding:16px}
+.n.v{border-top-color:var(--ink)}
+.n.a{border-top-color:var(--teal)}
+.n.b{border-top-color:var(--gold)}
+.n .k{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.n .g{font:600 36px/1 var(--serif);color:var(--ink2);letter-spacing:-.03em;margin:8px 0 2px}
+.n .g small{font:400 12px var(--sans);color:var(--muted);letter-spacing:0}
+.n .d{font-size:12.5px;color:#5b6570;line-height:1.4}
+.err{font:700 12px var(--mono);margin-top:6px}
+.err.neg{color:var(--teal)} .err.pos{color:var(--gold2)}
+
+.sw{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.sw button{font:600 13px var(--sans);padding:8px 15px;border-radius:999px;border:1px solid var(--line);
+  background:var(--cream2);color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+#pasaje{font:20px/2.0 var(--sans);word-spacing:.04em}
+@media(max-width:600px){#pasaje{font-size:17px;line-height:1.95}}
+.p{padding:1px 4px;border-radius:4px;cursor:pointer}
+.p:hover{outline:2px solid var(--teal);outline-offset:1px}
+.acierto{background:var(--green-f);color:var(--green)}
+.sustitucion{background:var(--ambar-f);color:var(--ambar);text-decoration:underline wavy currentColor 1px}
+.omision{color:var(--gris);text-decoration:line-through}
+.truncada{background:var(--ambar-f);color:var(--ambar);border-bottom:2px dotted var(--ambar)}
+.insercion{background:var(--rojo-f);color:var(--rojo);font-size:.8em;vertical-align:.12em}
+.heredada{box-shadow:inset 0 -2px 0 var(--teal)}
+.sonando{outline:2px solid var(--teal);outline-offset:1px;background:#e8eef6 !important}
+
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:18px;align-items:center}
+.pie{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:18px;line-height:1.5}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:640px){.dos{grid-template-columns:1fr}}
+ul{list-style:none} li{position:relative;padding-left:20px;font-size:15px;margin-bottom:8px;line-height:1.5}
+li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--gold)}
+footer{border-top:1px solid var(--line);margin-top:20px;padding:26px 0 60px;font-size:13px;color:var(--muted)}
+a{color:var(--teal)}
+.cita{border-left:3px solid var(--teal);padding:2px 0 2px 16px;margin:14px 0;font-size:15px;color:var(--ink2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Prototipo abierto &middot; Septiembre 2026</div>
+    <h1>Fluidez lectora automatizada</h1>
+    <div class="sub">Un programa escucha a alguien leer en voz alta y cuenta las palabras
+    correctas por minuto. Esta página muestra cuánto se equivoca.</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="alerta">
+  <b>Esto no es un instrumento de evaluación y no debe usarse para calificar a nadie.</b>
+  Es un banco de pruebas. Todo lo que se ve aquí se midió con voz adulta y con voz sintetizada:
+  <b>nunca se probó con niños peruanos</b>. Para que sirva de verdad hace falta entrenarlo y validarlo
+  con grabaciones de niños del Perú leyendo en voz alta, incluyendo español andino y amazónico. Esa es
+  la pieza que falta y es la razón de ser de esta página.
+</div>
+
+<section>
+  <h3>El caso</h3>
+  <h2>Una lectura con diez errores puestos a propósito</h2>
+  <p>La grabación de abajo es voz sintetizada leyendo un pasaje de 90 palabras. Le inyectamos
+  <b>diez errores en posiciones que elegimos nosotros</b>: tres palabras omitidas, tres sustituidas por
+  otras y cuatro leídas a medias. Por eso <b>sabemos la respuesta correcta antes de medir</b>, que es lo
+  único que permite decir si el programa acierta.</p>
+
+  <div class="tres" id="tres"></div>
+
+  <div class="cita" id="lectura"></div>
+</section>
+
+<section>
+  <div class="card">
+    <h3>El pasaje</h3>
+    <div class="sw" id="sw"></div>
+    <div id="pasaje"></div>
+    <div class="leyenda">
+      <span class="p acierto">leída</span>
+      <span class="p sustitucion">sustituida</span>
+      <span class="p truncada">leída a medias</span>
+      <span class="p omision">omitida</span>
+      <span class="p insercion">insertada</span>
+      <span style="margin-left:auto"><b>Hacé clic en cualquier palabra para escucharla.</b></span>
+    </div>
+    <div class="pie" id="proc"></div>
+  </div>
+  <audio id="au" preload="metadata"></audio>
+</section>
+
+<section>
+  <h3>Por qué dos motores y no uno</h3>
+  <h2>Un solo número no deja ver que puede estar mal</h2>
+  <div class="dos">
+    <div>
+      <p>Los dos programas hacen cosas distintas. <b>Whisper</b> transcribe lo que oye sin saber qué había
+      que leer, como un taquígrafo que no vio el libreto. <b>wav2vec2</b> recibe el texto de antemano y solo
+      marca, palabra por palabra, si está o no, como un corrector siguiendo el libreto con el dedo.</p>
+      <p>En este caso se equivocan <b>en direcciones opuestas</b>, y la verdad queda entre los dos. Ninguno
+      de los dos por separado lo habría dejado ver.</p>
+    </div>
+    <div>
+      <p>Hay un resultado más incómodo. Sobre <b>una misma grabación</b> de una persona leyendo el mismo
+      texto, cinco modelos de reconocimiento igualmente razonables dieron entre <b>142 y 167 palabras
+      correctas por minuto</b>. Veinticinco puntos de diferencia, sin que cambie ni el lector ni el texto.</p>
+      <p>Los valores de referencia para el final de segundo grado están en el orden de 40 a 60 palabras por
+      minuto. Una diferencia así, originada solo en qué programa escucha, <b>puede cambiar qué escuelas
+      aparecen como rezagadas</b>.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h3>Un principio de diseño</h3>
+  <h2>Un audio que no se pudo evaluar no es un cero</h2>
+  <p>Si la grabación sale muda, o con demasiado ruido, o demasiado corta, el sistema responde
+  <b>«no evaluable», con el motivo, y nunca un cero</b>. La razón es simple: un cero es una afirmación sobre
+  un niño, y no se puede afirmar lo que no se escuchó. Sin esta regla el sistema mide la calidad del
+  micrófono y la llama fluidez, y un chico mal grabado puntúa peor que uno bien grabado.</p>
+  <p>Lo mismo con la regla de corte del protocolo: cuando alguien lee y no acierta ninguno de los primeros
+  diez ítems, <b>eso sí es un cero legítimo</b> y se registra distinto. Los dos casos se ven idénticos en la
+  salida del programa y significan cosas opuestas.</p>
+</section>
+
+<section>
+  <h3>Lo que falta</h3>
+  <h2>Voces de niños peruanos</h2>
+  <p>Un detalle encontrado el primer día, con la primera grabación humana que procesó el sistema: la palabra
+  <b>«a»</b> después de una palabra terminada en «a», como en «camina a la escuela», <b>desaparece</b>. Las dos
+  vocales se funden al hablar, hay una sola en el audio, y el programa la marcaba como no leída. No es un error
+  del lector: es español bien hablado, y rompía la medición.</p>
+  <p>Nadie lo habría puesto en una lista de errores previsibles, porque no es un error. Eso es exactamente lo
+  que hace falta buscar con grabaciones reales, en el aula real y a la edad real. Y hay uno todavía más
+  importante por verificar: si el sistema penaliza el <b>intercambio de vocales e/i y o/u</b> propio de
+  hablantes de quechua y aimara, estaría midiendo lengua materna y llamándolo fluidez.</p>
+  <ul>
+    <li>Los modelos son de pesos abiertos, con licencias MIT y Apache 2.0, y corren en la propia computadora. <b>No hay costo por uso ni el audio sale a ningún servicio.</b></li>
+    <li>Del orden de 460 horas de procesador por cada 100.000 estudiantes, en una computadora común y sin placa de video.</li>
+    <li>El modelo es lo bastante chico para correr en un teléfono de gama media sin conexión.</li>
+  </ul>
+</section>
+
+<footer>
+  <div class="wrap" style="padding:0">
+    Especificación de subtareas, tiempos y reglas de corte adaptadas de
+    <i>Early Grade Reading Assessment Toolkit</i>, 2.ª edición, RTI International para USAID, 2016,
+    bajo licencia Creative Commons Attribution 4.0. Los estímulos son de elaboración propia y requieren
+    revisión de un especialista en lengua antes de cualquier uso en campo.
+  </div>
+</footer>
+</div>
+
+<script>
+let D=null, vista=-1, sonando=null;  // abre mostrando la verdad, no un motor
+
+const VERDAD = -1;
+
+function marcadoVerdad(){
+  const v = D.verdad, out = [];
+  const om = new Set(v.omitidas), su = new Set(Object.keys(v.sustituidas).map(Number)),
+        tr = new Set(Object.keys(v.truncadas).map(Number));
+  D.estimulo.palabras.forEach((w,i)=>{
+    let op = "acierto", oido = null;
+    if(om.has(i)) op="omision";
+    else if(su.has(i)){ op="sustitucion"; oido=v.sustituidas[i]; }
+    else if(tr.has(i)){ op="truncada"; oido=v.truncadas[i]; }
+    out.push({op, idx:i, texto:w, oido, t0:null, t1:null});
+  });
+  return out;
+}
+
+function tiemposDeReferencia(){
+  // Los tiempos salen del motor libre, que es el que da marcas por palabra.
+  const m = {};
+  D.motores[0].marcado.forEach(x=>{ if(x.idx!=null && x.t0!=null) m[x.idx]=[x.t0,x.t1]; });
+  return m;
+}
+
+function pintar(){
+  const cont = document.getElementById("pasaje");
+  cont.innerHTML = "";
+  const marcado = vista===VERDAD ? marcadoVerdad() : D.motores[vista].marcado;
+  const tref = tiemposDeReferencia();
+  marcado.forEach(m=>{
+    const s = document.createElement("span");
+    s.className = "p " + m.op + (m.nota ? " heredada" : "");
+    s.textContent = m.op==="insercion" ? "[+"+m.texto+"]" : m.texto;
+    const t = (m.t0!=null) ? [m.t0,m.t1] : (m.idx!=null ? tref[m.idx] : null);
+    const partes=[];
+    if(m.oido && m.op!=="acierto") partes.push("se leyó: "+m.oido);
+    if(m.conf!=null) partes.push("confianza "+m.conf);
+    if(m.nota) partes.push(m.nota);
+    if(t) partes.push(t[0]+" a "+t[1]+" s");
+    if(partes.length) s.title = partes.join(" · ");
+    if(t) s.onclick = ()=>tocar(t[0],t[1],s);
+    cont.append(s, document.createTextNode(" "));
+  });
+  document.querySelectorAll("#sw button").forEach(b=>
+    b.setAttribute("aria-pressed", String(Number(b.dataset.v)===vista)));
+}
+
+function tocar(t0,t1,el){
+  const a = document.getElementById("au");
+  if(sonando) sonando.classList.remove("sonando");
+  sonando = el; el.classList.add("sonando");
+  a.currentTime = Math.max(0, t0-0.06); a.play();
+  clearTimeout(a._p);
+  a._p = setTimeout(()=>{ a.pause(); el.classList.remove("sonando"); sonando=null; }, (t1-t0+0.2)*1000);
+}
+
+function numeros(){
+  const v = D.verdad, [lib,res] = D.motores;
+  const err = m => { const d = +(m.pcpm - v.pcpm).toFixed(1);
+    return `<div class="err ${d<0?"neg":"pos"}">${d>0?"+":""}${d} contra la verdad</div>`; };
+  document.getElementById("tres").innerHTML = `
+    <div class="n v"><div class="k">La verdad conocida</div>
+      <div class="g">${v.pcpm}<small> por minuto</small></div>
+      <div class="d">${v.correctas} de ${v.total} palabras. Lo sabemos porque nosotros pusimos los errores.</div></div>
+    <div class="n a"><div class="k">Whisper &middot; libre</div>
+      <div class="g">${lib.pcpm}<small> por minuto</small></div>
+      <div class="d">${lib.correctas} de ${v.total}. Transcribe sin saber qué había que leer.</div>${err(lib)}</div>
+    <div class="n b"><div class="k">wav2vec2 &middot; restringido</div>
+      <div class="g">${res.pcpm}<small> por minuto</small></div>
+      <div class="d">${res.correctas} de ${v.total}. Marca contra el texto que ya tiene.</div>${err(res)}</div>`;
+
+  document.getElementById("lectura").innerHTML =
+    `Uno se queda corto y el otro se pasa, y la verdad queda entre los dos. Difieren en
+     <b>${D.discrepancia} palabras por minuto</b> sobre la misma grabación.`;
+
+  document.getElementById("proc").textContent = D.estimulo.procedencia;
+}
+
+fetch("datos.json").then(r=>r.json()).then(d=>{
+  D = d;
+  document.getElementById("au").src = d.audio;
+  const sw = document.getElementById("sw");
+  [[VERDAD,"La verdad"],[0,"Lo que dijo Whisper"],[1,"Lo que dijo wav2vec2"]].forEach(([v,t])=>{
+    const b=document.createElement("button"); b.dataset.v=v; b.textContent=t;
+    b.onclick=()=>{vista=v;pintar();}; sw.append(b);
+  });
+  numeros(); pintar();
+});
+</script>
+</body>
+</html>
