@@ -122,12 +122,21 @@ audio{max-width:100%}
 <!-- ============ 1. POR QUE IMPORTA ============ -->
 <section>
   <h3>Por qué importa</h3>
-  <h2>Segundo grado es el último aviso que llega a tiempo</h2>
+  <h2>Cuanto antes se ve, más barato es corregirlo</h2>
   <p>Hasta segundo grado el niño <b>aprende a leer</b>. Desde tercero <b>lee para aprender</b>, en todas las
   materias. Si a los ocho años todavía tiene que descifrar cada palabra, gasta toda su atención en eso y no le
   queda nada para entender lo que dice el texto. A partir de ahí la brecha se ensancha sola.</p>
-  <p>Por eso la fluidez se mide al <b>final de segundo grado</b>, con un minuto de lectura en voz alta: es el
-  momento más temprano en que el problema se ve, y el último en que corregirlo es barato.</p>
+  <p>Por eso la fluidez sobre un texto corrido se mide <b>al final de segundo grado</b>: antes de eso el chico
+  todavía no lee un texto corrido, así que no hay fluidez que medir.</p>
+  <p><b>Pero el problema se ve mucho antes, y conviene mirarlo antes.</b> No con el pasaje, sino con las otras
+  tareas del mismo protocolo: reconocer <b>sonidos de letras</b>, sílabas y palabras inventadas. El propio
+  manual de EGRA señala que el conocimiento de las letras es <b>altamente predictivo del rendimiento lector
+  posterior</b>, y esas tareas se pueden tomar desde inicial, antes de que el niño lea una sola oración. En
+  Antioquia se midió ya en <b>primer grado</b>, donde cinco de cada seis estudiantes quedaron por debajo del
+  nivel esperado.</p>
+  <p>Son además las tareas <b>más tediosas de tomar a mano</b>, y donde los evaluadores humanos menos coinciden
+  entre sí: en palabras inventadas, apenas el 73% de las veces. Por eso este prototipo cubre las cinco
+  subtareas y no solo el pasaje.</p>
 
   <div class="grid3">
     <div class="dato r"><b>56%</b><span>De los niños peruanos <b>no lee ni comprende un texto simple a los 10
@@ -268,47 +277,47 @@ audio{max-width:100%}
       <td class="num">WER 16,8%</td></tr>
   </table>
 
-  <h2 style="margin-top:32px">¿Y qué tan lejos está esto del mejor resultado conocido?</h2>
-  <p>La pregunta correcta, y la respuesta es incómoda. <b>El patrón de oro es coincidir con un evaluador
-  humano</b>, y el mejor resultado publicado es el de Ghana. Esto es lo que se puede comparar y lo que no:</p>
+  <h2 style="margin-top:34px">Una sola medida para comparar</h2>
+  <p><b>Un evaluador humano no es la verdad</b>: es una medición con su propio error. Dos personas calificando
+  al mismo niño no coinciden, y en palabras inventadas coinciden apenas el 73% de las veces. La verdad se
+  estima haciendo que <b>varios evaluadores califiquen la misma grabación</b>: su promedio es la mejor
+  estimación del puntaje real, y lo que se dispersan entre ellos dice cuánto se equivoca una persona típica.</p>
+  <p>Con eso, todo se reduce a <b>un solo número</b>, en la misma unidad que el puntaje:</p>
+
+  <div class="card" style="background:var(--ink);color:#e9efe6;border:none">
+    <div style="font:700 10.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--gold);
+      margin-bottom:8px">La medida</div>
+    <div style="font:500 24px/1.25 var(--serif);color:#fff">Cuántas palabras por minuto se desvía, en promedio,
+    del puntaje verdadero.</div>
+    <p style="color:rgba(240,238,230,.9);margin:12px 0 0">Y el objetivo, dicho en esa unidad: <b style="color:#fff">que
+    la máquina no se desvíe más que una persona</b>. Si un evaluador se aparta en promedio 4 palabras por
+    minuto de la verdad y la máquina se aparta 4, llegó al techo y no se le puede pedir más. Si se aparta 15,
+    todavía no sirve.</p>
+  </div>
+
   <table>
-    <tr><th></th><th>Ghana, el mejor conocido</th><th>Este prototipo</th></tr>
-    <tr><td><b>Contra qué se comparó</b></td>
-        <td>Evaluadores humanos expertos</td>
-        <td>Una verdad sintética <b>que fabricamos nosotros</b></td></tr>
-    <tr><td><b>Sobre qué grabaciones</b></td>
-        <td>Cientos, de aula real, con acentos regionales</td>
-        <td><b>Una</b>, de voz sintetizada</td></tr>
-    <tr class="destacada"><td><b>Correlación con el humano</b></td>
-        <td class="num">0,964</td>
-        <td class="num" style="color:var(--rojo)">no medida</td></tr>
-    <tr><td><b>Diferencia media por lectura</b></td>
-        <td class="num">5 ppm</td>
-        <td class="num">4,5 y 4,3 <span class="chico" style="font-weight:400">en un solo caso</span></td></tr>
+    <tr><th>Quién puntúa</th><th>Se desvía del puntaje verdadero</th></tr>
+    <tr><td><b>Un evaluador humano típico</b><br><span class="chico">el techo contra el que hay que
+      compararse</span></td>
+      <td class="num" style="color:var(--muted)">por medir<br><span class="chico" style="font-weight:400">se
+      obtiene con el panel de evaluadores</span></td></tr>
+    <tr class="destacada"><td><b>Ghana</b>, la mejor máquina publicada<br><span class="chico">contra un
+      evaluador experto, no contra un panel</span></td>
+      <td class="num">5,0 ppm</td></tr>
+    <tr><td><b>Este prototipo</b><br><span class="chico">nunca se comparó con una persona</span></td>
+      <td class="num" style="color:var(--rojo)">no medido<br><span class="chico" style="font-weight:400">4,5 ppm
+      contra una verdad sintética, que no es lo mismo</span></td></tr>
   </table>
-  <div class="card" style="border-left:4px solid var(--rojo)">
-    <p style="margin-bottom:0">No estamos ni cerca ni lejos del patrón de oro: <b>todavía no estamos en la
-    misma escala</b>, porque este sistema <b>nunca se comparó con un evaluador humano</b>. Los 4,5 puntos de
-    error que se ven arriba salen de una grabación sintética cuyos errores pusimos nosotros, y eso no es lo
-    mismo que acertarle a un niño de verdad. <b>Cerrar esa distancia es exactamente el paso que falta</b>, y
-    para darlo hacen falta grabaciones de niños peruanos con la hoja del evaluador al lado.</p>
-  </div>
 
-  <p class="fuente">El de Ghana es la vara más exigente porque se hizo con grabaciones de aula real, acentos
-  regionales y el modelo sacado de la caja. Ese mismo estudio reporta <b>sesgo del modelo contra acentos
-  subrepresentados</b>, que es exactamente la preocupación con quechua y aimara.</p>
+  <p class="fuente">Las dos filas de abajo <b>no son comparables entre sí</b>: la de Ghana sale de cientos de
+  grabaciones de aula real contra un evaluador experto, y la nuestra de una sola grabación sintetizada cuyos
+  errores pusimos nosotros. Y ninguna de las dos se midió contra un panel, que es lo que estimaría la verdad.
+  <b>Llenar la primera fila y volver a medir las otras dos en esa escala es exactamente el paso que falta.</b></p>
 
-  <div class="card">
-    <h3>Qué precisión haría falta</h3>
-    <p><b>El número de la máquina no significa nada solo.</b> Si dos evaluadores humanos calificando al mismo
-    niño coinciden en 0,86, como midió SARA, exigirle 0,95 a la máquina es pedirle que sea mejor que el
-    instrumento. Por eso una submuestra tiene que ser calificada por <b>dos personas</b>, para tener el techo
-    contra el cual comparar.</p>
-    <p style="margin-bottom:0">Con <b>150 niños</b> el intervalo de confianza de la correlación es de
-    aproximadamente 0,02, suficiente para distinguir 0,95 de 0,90. Y para saber si el sistema penaliza a
-    hablantes de quechua o aimara alcanzan unos <b>30 a 40 niños por grupo</b>, siempre que la muestra se
-    estratifique a propósito.</p>
-  </div>
+  <p class="fuente">Alcanza con que <b>tres o más evaluadores</b> califiquen una submuestra de unos 50 niños.
+  Con 150 niños en total el intervalo de confianza de la comparación es de aproximadamente 0,02, y para saber si
+  el sistema penaliza a hablantes de quechua o aimara alcanzan unos <b>30 a 40 por grupo</b>, siempre que la
+  muestra se estratifique a propósito.</p>
 </section>
 
 <!-- ============ 6. PRINCIPIOS Y LO QUE FALTA ============ -->
