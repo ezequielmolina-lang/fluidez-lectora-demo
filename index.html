@@ -11,82 +11,76 @@
 <style>
 :root{
   --ink:#13303a; --ink2:#16242f; --teal:#1a4a57; --gold:#c89a3c; --gold2:#a87d24;
-  --green:#186b43; --green-f:#e4f2ea; --ambar:#8f5a00; --ambar-f:#fcefd8;
+  --verde:#186b43; --verde-f:#e4f2ea; --ambar:#8f5a00; --ambar-f:#fcefd8;
   --gris:#a8a8a8; --rojo:#a51f18; --rojo-f:#fbe9e8;
   --cream:#f1efe9; --cream2:#FBFAF6; --line:#e2dcce; --body:#3a444d; --muted:#7c8590;
   --sans:'Inter',system-ui,sans-serif; --serif:'Newsreader',Georgia,serif; --mono:'JetBrains Mono',ui-monospace,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--cream);color:var(--body);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
-.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
 
-header{background:var(--ink);color:#fff;padding:52px 0 44px;margin-bottom:34px}
+header{background:var(--ink);color:#fff;padding:54px 0 46px;margin-bottom:32px}
 .eyebrow{font:700 10.5px var(--mono);letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
 h1{font:500 40px/1.08 var(--serif);letter-spacing:-.02em;margin:14px 0 0}
-@media(max-width:600px){h1{font-size:30px}}
-header .sub{font:italic 400 18px/1.4 var(--serif);color:#a9c6d6;margin-top:14px;max-width:620px}
+@media(max-width:600px){h1{font-size:29px}}
+header .sub{font:italic 400 18px/1.4 var(--serif);color:#a9c6d6;margin-top:14px;max-width:640px}
 
 .alerta{background:#fff8e6;border:1px solid #f0dfae;border-left:4px solid var(--gold2);
-  border-radius:8px;padding:16px 20px;margin-bottom:32px;font-size:14.5px;color:#5b4406;line-height:1.55}
+  border-radius:8px;padding:16px 20px;margin-bottom:34px;font-size:14.5px;color:#5b4406;line-height:1.55}
 .alerta b{color:#3d2d05}
 
-h2{font:500 25px/1.15 var(--serif);color:var(--ink2);letter-spacing:-.015em;margin:0 0 6px}
+h2{font:500 26px/1.15 var(--serif);color:var(--ink2);letter-spacing:-.015em;margin:0 0 8px}
 h3{font:700 10.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);margin:0 0 8px}
-p{margin:0 0 12px;font-size:15.5px}
-section{margin-bottom:40px}
-.card{background:var(--cream2);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:18px}
+p{margin:0 0 13px;font-size:15.5px}
+section{margin-bottom:46px}
+.card{background:var(--cream2);border:1px solid var(--line);border-radius:12px;padding:24px;margin:18px 0}
+.fuente{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:4px}
+.oculto{display:none}
+a{color:var(--teal)}
 
-/* tres puntajes */
-.tres{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 22px}
-@media(max-width:640px){.tres{grid-template-columns:1fr}}
-.n{background:var(--cream2);border:1px solid var(--line);border-top:4px solid var(--line);border-radius:10px;padding:16px}
-.n.v{border-top-color:var(--ink)}
-.n.a{border-top-color:var(--teal)}
-.n.b{border-top-color:var(--gold)}
-.n .k{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-.n .g{font:600 36px/1 var(--serif);color:var(--ink2);letter-spacing:-.03em;margin:8px 0 2px}
-.n .g small{font:400 12px var(--sans);color:var(--muted);letter-spacing:0}
-.n .d{font-size:12.5px;color:#5b6570;line-height:1.4}
-.err{font:700 12px var(--mono);margin-top:6px}
-.err.neg{color:var(--teal)} .err.pos{color:var(--gold2)}
+/* cifras */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+@media(max-width:640px){.grid3{grid-template-columns:1fr}}
+.dato{background:var(--cream2);border:1px solid var(--line);border-top:4px solid var(--line);
+  border-radius:10px;padding:16px}
+.dato.r{border-top-color:var(--rojo)} .dato.t{border-top-color:var(--teal)}
+.dato.g{border-top-color:var(--verde)} .dato.o{border-top-color:var(--gold)}
+.dato b{display:block;font:600 33px/1 var(--serif);color:var(--ink2);letter-spacing:-.03em;margin-bottom:7px}
+.dato b small{font:400 12.5px var(--sans);color:var(--muted);letter-spacing:0}
+.dato span{display:block;font-size:12.5px;color:#5b6570;line-height:1.42}
 
-.sw{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
-.sw button{font:600 13px var(--sans);padding:8px 15px;border-radius:999px;border:1px solid var(--line);
-  background:var(--cream2);color:var(--muted);cursor:pointer}
-.sw button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+/* tablas */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14.5px}
+th{font:700 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+   text-align:left;padding:0 10px 8px 0;border-bottom:1px solid var(--line)}
+td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.45}
+td.num{font:700 15px var(--mono);color:var(--ink2);white-space:nowrap}
+tr.destacada td{background:#eef4f0}
+.chico{font-size:12.5px;color:var(--muted)}
 
-#pasaje{font:20px/2.0 var(--sans);word-spacing:.04em}
-@media(max-width:600px){#pasaje{font-size:17px;line-height:1.95}}
-.p{padding:1px 4px;border-radius:4px;cursor:pointer}
-.p:hover{outline:2px solid var(--teal);outline-offset:1px}
-.acierto{background:var(--green-f);color:var(--green)}
+/* el pasaje */
+.pasaje{font:20px/2.0 var(--sans);word-spacing:.04em}
+@media(max-width:600px){.pasaje{font-size:17.5px;line-height:1.95}}
+.p{padding:1px 4px;border-radius:4px}
+.acierto{background:var(--verde-f);color:var(--verde)}
 .sustitucion{background:var(--ambar-f);color:var(--ambar);text-decoration:underline wavy currentColor 1px}
 .omision{color:var(--gris);text-decoration:line-through}
-.truncada{background:var(--ambar-f);color:var(--ambar);border-bottom:2px dotted var(--ambar)}
 .insercion{background:var(--rojo-f);color:var(--rojo);font-size:.8em;vertical-align:.12em}
-.heredada{box-shadow:inset 0 -2px 0 var(--teal)}
-.sonando{outline:2px solid var(--teal);outline-offset:1px;background:#e8eef6 !important}
 .siguiendo{outline:2px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 4px rgba(19,48,58,.10)}
-.coincide{color:#b5b0a6}
-.discrepa{background:#efe3c9;color:#6b4a00;font-weight:600;box-shadow:inset 0 -2px 0 var(--gold2)}
-
 .leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:18px;align-items:center}
-.pie{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:18px;line-height:1.5}
-.dos{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:640px){.dos{grid-template-columns:1fr}}
-ul{list-style:none} li{position:relative;padding-left:20px;font-size:15px;margin-bottom:8px;line-height:1.5}
-li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--gold)}
-footer{border-top:1px solid var(--line);margin-top:20px;padding:26px 0 60px;font-size:13px;color:var(--muted)}
-a{color:var(--teal)}
-.cita{border-left:3px solid var(--teal);padding:2px 0 2px 16px;margin:14px 0;font-size:15px;color:var(--ink2)}
 
-/* probalo con tu voz */
-.voz-ctl{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:18px}
+/* reproductor y grabacion */
+.reproductor{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:16px 0;
+  padding:14px 16px;background:var(--cream);border:1px solid var(--line);border-radius:10px}
 .btn{font:600 15px var(--sans);padding:13px 22px;border-radius:999px;border:none;background:var(--ink);
   color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:9px}
 .btn:hover{filter:brightness(1.25)}
 .btn:disabled{background:#bdbdbd;cursor:not-allowed;filter:none}
 .btn[data-e="grabando"]{background:var(--rojo)}
+.btn.sec{background:transparent;color:var(--teal);border:1px solid var(--line);font-size:13.5px}
+.btn.sec:hover{filter:none;border-color:var(--teal)}
+.btn.sec:disabled{background:transparent;color:var(--muted)}
 .pt{width:9px;height:9px;border-radius:50%;background:#fff}
 .btn[data-e="grabando"] .pt{animation:late 1s infinite}
 @keyframes late{0%,100%{opacity:1}50%{opacity:.25}}
@@ -96,13 +90,6 @@ a{color:var(--teal)}
 .estado{font-size:14px;color:var(--muted)}
 .barra{height:5px;background:var(--line);border-radius:3px;margin-top:14px;overflow:hidden}
 #barra-in{height:100%;width:0;background:var(--teal);transition:width .2s}
-#pasaje-voz{font:19px/1.95 var(--sans);margin-top:18px}
-.reproductor{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 0;
-  padding:14px 16px;background:var(--cream);border:1px solid var(--line);border-radius:10px}
-.reproductor .btn{padding:11px 18px;font-size:14px}
-.btn.sec{background:transparent;color:var(--teal);border:1px solid var(--line);padding:11px 18px;font-size:13.5px}
-.btn.sec:hover{filter:none;border-color:var(--teal)}
-.btn.sec:disabled{background:transparent;color:var(--muted);border-color:var(--line)}
 audio{max-width:100%}
 </style>
 </head>
@@ -113,7 +100,7 @@ audio{max-width:100%}
     <div class="eyebrow">Prototipo abierto &middot; Septiembre 2026</div>
     <h1>Fluidez lectora automatizada</h1>
     <div class="sub">Un programa escucha a alguien leer en voz alta y cuenta las palabras
-    correctas por minuto. Esta página muestra cuánto se equivoca.</div>
+    correctas por minuto. Esta página muestra para qué sirve y cuánto se equivoca.</div>
   </div>
 </header>
 
@@ -121,67 +108,115 @@ audio{max-width:100%}
 
 <div class="alerta">
   <b>Esto no es un instrumento de evaluación y no debe usarse para calificar a nadie.</b>
-  Es un banco de pruebas. Todo lo que se ve aquí se midió con voz adulta y con voz sintetizada:
-  <b>nunca se probó con niños peruanos</b>. Para que sirva de verdad hace falta entrenarlo y validarlo
-  con grabaciones de niños del Perú leyendo en voz alta, incluyendo español andino y amazónico. Esa es
-  la pieza que falta y es la razón de ser de esta página.
+  Es un banco de pruebas. Todo lo que se muestra se midió con voz adulta y sintetizada:
+  <b>nunca se probó con niños peruanos</b>. Para que sirva hace falta entrenarlo y validarlo con grabaciones
+  de niños del Perú, incluyendo español andino y amazónico. Esa es la pieza que falta.
 </div>
 
+<!-- ============ 1. POR QUE IMPORTA ============ -->
 <section>
-  <h3>El caso</h3>
-  <h2>Una lectura con diez errores puestos a propósito</h2>
-  <p>La grabación de abajo es voz sintetizada leyendo un pasaje de 90 palabras. Le inyectamos
-  <b>diez errores en posiciones que elegimos nosotros</b>: tres palabras omitidas, tres sustituidas por
-  otras y cuatro leídas a medias. Por eso <b>sabemos la respuesta correcta antes de medir</b>, que es lo
-  único que permite decir si el programa acierta.</p>
+  <h3>Por qué importa</h3>
+  <h2>Segundo grado es el último aviso que llega a tiempo</h2>
+  <p>Hasta segundo grado el niño <b>aprende a leer</b>. Desde tercero <b>lee para aprender</b>, en todas las
+  materias. Si a los ocho años todavía tiene que descifrar cada palabra, gasta toda su atención en eso y no le
+  queda nada para entender lo que dice el texto. A partir de ahí la brecha se ensancha sola.</p>
+  <p>Por eso la fluidez se mide al <b>final de segundo grado</b>, con un minuto de lectura en voz alta: es el
+  momento más temprano en que el problema se ve, y el último en que corregirlo es barato.</p>
 
-  <div class="tres" id="tres"></div>
-
-  <div class="cita" id="lectura"></div>
+  <div class="grid3">
+    <div class="dato r"><b>56%</b><span>De los niños peruanos <b>no alcanza la competencia lectora esperada a
+      los 10 años</b></span></div>
+    <div class="dato t"><b>+4,8 pp</b><span>Por encima del promedio de América Latina y el Caribe</span></div>
+    <div class="dato t"><b>+23,3 pp</b><span>Por encima del promedio de los países de ingreso medio alto</span></div>
+  </div>
+  <p class="fuente">Banco Mundial y UIS, <i>Peru Learning Poverty Brief</i>, datos a mayo de 2021, con la
+  privación de aprendizaje estimada a partir de 6.º grado. <b>Ese número se mide a los 10 años, cuando el
+  problema ya ocurrió.</b> La fluidez en segundo grado es la señal que lo anticipa, y es justamente la que hoy
+  no se puede tomar seguido porque cuesta un evaluador entrenado sentado con cada niño.</p>
 </section>
 
+<!-- ============ 2. LA VARA ============ -->
 <section>
+  <h3>La vara</h3>
+  <h2>Cuánto se espera que lean, y cuánto leen</h2>
+  <p>Los umbrales de final de segundo grado en la región convergen entre <b>70 y 84 palabras por minuto</b>.
+  Perú es el único de la lista sin una norma oficial verificable.</p>
+  <table>
+    <tr><th>País o jurisdicción</th><th>Umbral de 2.º</th><th>De dónde sale</th></tr>
+    <tr class="destacada"><td><b>Antioquia, Colombia</b></td><td class="num">74</td>
+      <td>Metaanálisis sobre lectura en español, <b>calibrado con datos de siete entidades territoriales
+      colombianas</b></td></tr>
+    <tr><td>México, SEP</td><td class="num">60 a 84</td><td>Estándares Nacionales de Habilidad Lectora, 2010</td></tr>
+    <tr><td>Chile, MINEDUC</td><td class="num">70</td><td>Tabla de velocidad lectora</td></tr>
+    <tr><td>El Salvador</td><td class="num">65</td><td><b>Importado</b> de un estándar estadounidense</td></tr>
+    <tr><td>Perú</td><td class="num">60 ?</td><td>Circula en material docente. <b>No se encontró norma oficial</b></td></tr>
+  </table>
+
+  <p style="margin-top:26px">En <b>Antioquia</b> la Secretaría de Educación aplicó EGRA en 2024 con el Banco
+  Mundial a 3.127 estudiantes de 50 municipios, a mano y uno por uno:</p>
+  <table>
+    <tr><th>Grado</th><th>Media</th><th>Esperado</th><th>Resultado</th></tr>
+    <tr><td>1.º</td><td class="num">28,9</td><td class="num">50</td><td><b>5 de cada 6</b> no alcanza</td></tr>
+    <tr class="destacada"><td>2.º</td><td class="num">56,4</td><td class="num">74</td><td><b>3 de cada 4</b> no alcanza</td></tr>
+  </table>
+  <p class="fuente">Los estudiantes de zona rural y con sobreedad quedan sistemáticamente por debajo. Fuente:
+  Banco Mundial, <i>Antioquia: análisis de resultados de la evaluación EGRA 2024</i>.</p>
+
+  <p style="margin-top:20px">Y en <b>Mendoza</b> se hace un <b>censo de fluidez dos veces al año</b>: entre
+  abril y agosto el nivel crítico de 3.º grado bajó de 30% a 16%. Medir seguido sirve, y hoy cuesta un
+  operativo entero cada vez. Eso es exactamente lo que un sistema automático abarataría.</p>
+</section>
+
+<!-- ============ 3. EL EJEMPLO ============ -->
+<section>
+  <h3>Un ejemplo con la respuesta conocida</h3>
+  <h2>Esta es una lectura con diez errores puestos a propósito</h2>
+  <p>El texto de abajo tiene 90 palabras. La grabación es voz sintetizada leyéndolo, y le inyectamos
+  <b>diez errores en posiciones que elegimos nosotros</b>: tres palabras omitidas, tres sustituidas y cuatro
+  leídas a medias. Por eso <b>sabemos la respuesta correcta antes de medir</b>, que es lo único que permite
+  decir si el programa acierta.</p>
+
   <div class="card">
-    <h3>El pasaje</h3>
+    <div class="pasaje" id="pasaje-limpio"></div>
     <div class="reproductor">
       <button class="btn" id="btn-play">&#9654;&nbsp; Escuchar la lectura</button>
-      <audio id="au" controls preload="auto" style="flex:1;min-width:240px;height:38px"></audio>
-      <span style="font-size:12.5px;color:var(--muted);flex-basis:100%">
-        Mientras suena, cada palabra se ilumina en el momento en que se lee.</span>
+      <audio id="au" controls preload="auto" style="flex:1;min-width:230px;height:38px"></audio>
+      <span class="chico" style="flex-basis:100%">Mientras suena, cada palabra se ilumina en el momento en que
+      se lee.</span>
     </div>
-    <p style="margin:18px 0 10px;font-size:14px;color:var(--muted)">
-      <b style="color:var(--ink2)">A los dos programas se les dio la misma grabación y el mismo texto.</b>
-      Cada pestaña muestra qué entendió cada uno, y la última, dónde no coincidieron.</p>
-    <div class="sw" id="sw"></div>
-    <div id="pasaje"></div>
-    <div class="leyenda oculto" id="leyenda-dif">
-      <span class="p discrepa">acá los dos programas no coinciden</span>
-      <span class="p coincide">acá coinciden</span>
-      <span style="margin-left:auto;font-size:11.5px">Misma grabación, distinto veredicto. Pasá el cursor sobre una palabra para ver qué dijo cada uno.</span>
-    </div>
-    <div class="leyenda" id="leyenda-normal">
-      <span class="p acierto">leída</span>
-      <span class="p sustitucion">sustituida</span>
-      <span class="p truncada">leída a medias</span>
-      <span class="p omision">omitida</span>
-      <span class="p insercion">insertada</span>
-      <span style="margin-left:auto;font-size:11.5px">También podés hacer clic en una palabra suelta para oír solo ese instante.</span>
-    </div>
-    <div class="pie" id="proc"></div>
   </div>
 
+  <h2 style="margin-top:30px">Y esto es lo que el sistema entendió</h2>
+  <div class="card">
+    <div class="pasaje" id="pasaje-marcado"></div>
+    <div class="leyenda">
+      <span class="p acierto">leída</span>
+      <span class="p sustitucion">sustituida</span>
+      <span class="p omision">omitida</span>
+      <span class="p insercion">insertada</span>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="dato"><b id="n-verdad">—</b><span><b>La verdad.</b> Lo sabemos porque nosotros pusimos los
+      errores</span></div>
+    <div class="dato t"><b id="n-a">—</b><span id="d-a">—</span></div>
+    <div class="dato o"><b id="n-b">—</b><span id="d-b">—</span></div>
+  </div>
+  <p class="fuente" id="pie-ejemplo"></p>
 </section>
 
+<!-- ============ 4. PROBALO ============ -->
 <section>
-  <div class="card" id="tarjeta-voz">
-    <h3>Probalo vos</h3>
-    <h2>Leé el pasaje en voz alta y mirá qué entiende</h2>
-    <p style="max-width:660px">Apretá grabar y leé el pasaje de arriba. <b>El modelo se descarga mientras
-    estás leyendo</b>, así que no hay que esperar: cuando terminás, puntúa. Todo <b>corre dentro de tu
-    navegador</b>, la grabación no se sube a ningún servidor ni queda guardada. Después de la primera vez
-    funciona incluso sin internet.</p>
+  <h3>Probalo vos</h3>
+  <h2>Leé este texto en voz alta y mirá qué entiende</h2>
+  <p>Apretá grabar y leé el texto de abajo. <b>El modelo se descarga mientras leés</b>, así que no hay que
+  esperar: cuando terminás, puntúa. Todo <b>corre dentro de tu navegador</b>, la grabación no se sube a ningún
+  servidor ni queda guardada.</p>
 
-    <div class="voz-ctl">
+  <div class="card">
+    <div class="pasaje" id="pasaje-leer"></div>
+    <div class="reproductor" style="background:var(--cream2)">
       <button class="btn" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar y puntuar</span></button>
       <button class="btn sec" id="btn-bajar">Descargar el modelo ahora</button>
       <div class="reloj" id="reloj-voz">0<small> s</small></div>
@@ -189,53 +224,68 @@ audio{max-width:100%}
     </div>
     <div class="barra oculto" id="barra"><div id="barra-in"></div></div>
 
-    <div class="aviso" style="margin:18px 0 0;font-size:13.5px">
-      <b>El modelo que corre acá es mucho más chico</b> que el de la versión de escritorio, porque tiene que
-      caber en una descarga razonable, y corre uno solo en vez de dos. <b>Su puntaje no se compara con los de
-      arriba</b>: son modelos distintos sobre grabaciones distintas. Esto muestra el mecanismo, no el
-      rendimiento del sistema.
-    </div>
-
     <div class="oculto" id="res-voz">
-      <div class="tres" id="tres-voz" style="margin-top:22px"></div>
-      <div id="pasaje-voz"></div>
-      <div class="pie" id="pie-voz"></div>
+      <div class="grid3" id="tres-voz"></div>
+      <div class="pasaje" id="pasaje-voz"></div>
+      <div class="leyenda">
+        <span class="p acierto">leída</span>
+        <span class="p sustitucion">sustituida</span>
+        <span class="p omision">omitida</span>
+      </div>
+      <p class="fuente" id="pie-voz"></p>
     </div>
   </div>
+
+  <p class="fuente"><b>El modelo que corre acá es más chico</b> que el de escritorio, porque tiene que caber en
+  una descarga razonable, y corre uno solo en vez de dos. Su puntaje <b>no se compara</b> con los del ejemplo:
+  son modelos distintos sobre grabaciones distintas.</p>
 </section>
 
+<!-- ============ 5. LA OTRA VARA ============ -->
 <section>
-  <h3>Por qué dos motores y no uno</h3>
-  <h2>Un solo número no deja ver que puede estar mal</h2>
-  <div class="dos">
-    <div>
-      <p>Los dos programas hacen cosas distintas. <b>Whisper</b> transcribe lo que oye sin saber qué había
-      que leer, como un taquígrafo que no vio el libreto. <b>wav2vec2</b> recibe el texto de antemano y solo
-      marca, palabra por palabra, si está o no, como un corrector siguiendo el libreto con el dedo.</p>
-      <p>En este caso se equivocan <b>en direcciones opuestas</b>, y la verdad queda entre los dos. Ninguno
-      de los dos por separado lo habría dejado ver.</p>
-    </div>
-    <div>
-      <p>Hay un resultado más incómodo. Sobre <b>una misma grabación</b> de una persona leyendo el mismo
-      texto, cinco modelos de reconocimiento igualmente razonables dieron entre <b>142 y 167 palabras
-      correctas por minuto</b>. Veinticinco puntos de diferencia, sin que cambie ni el lector ni el texto.</p>
-      <p>Los valores de referencia para el final de segundo grado están en el orden de 40 a 60 palabras por
-      minuto. Una diferencia así, originada solo en qué programa escucha, <b>puede cambiar qué escuelas
-      aparecen como rezagadas</b>.</p>
-    </div>
+  <h3>La otra vara</h3>
+  <h2>Cuánto aciertan hoy los sistemas automáticos</h2>
+  <p>Son dos preguntas distintas y conviene no mezclarlas. Una es si el chico lee bien. Esta es si el
+  instrumento sirve.</p>
+  <table>
+    <tr><th>Estudio</th><th>Qué midió</th><th>Resultado</th></tr>
+    <tr class="destacada">
+      <td><b>Ghana</b><br><span class="chico">inglés, aula real, modelo <b>sin afinar</b></span></td>
+      <td>Palabras por minuto automáticas contra las del evaluador experto. Diferencia media por alumno de
+        5 ppm y sesgo de 3</td>
+      <td class="num">r = 0,964</td></tr>
+    <tr><td><b>SARA</b><br><span class="chico">español, Rep. Dominicana</span></td>
+      <td>Acierto por ítem, contra <b>86,11% de acuerdo entre dos humanos</b></td>
+      <td class="num">91,97%</td></tr>
+    <tr><td><b>Tanzania</b><br><span class="chico">kiswahili infantil</span></td>
+      <td>Error de transcripción. <b>No midieron acuerdo con humanos</b></td>
+      <td class="num">WER 16,8%</td></tr>
+  </table>
+  <p class="fuente">El de Ghana es la vara más exigente porque se hizo con grabaciones de aula real, acentos
+  regionales y el modelo sacado de la caja. Ese mismo estudio reporta <b>sesgo del modelo contra acentos
+  subrepresentados</b>, que es exactamente la preocupación con quechua y aimara.</p>
+
+  <div class="card">
+    <h3>Qué precisión haría falta</h3>
+    <p><b>El número de la máquina no significa nada solo.</b> Si dos evaluadores humanos calificando al mismo
+    niño coinciden en 0,86, como midió SARA, exigirle 0,95 a la máquina es pedirle que sea mejor que el
+    instrumento. Por eso una submuestra tiene que ser calificada por <b>dos personas</b>, para tener el techo
+    contra el cual comparar.</p>
+    <p style="margin-bottom:0">Con <b>150 niños</b> el intervalo de confianza de la correlación es de
+    aproximadamente 0,02, suficiente para distinguir 0,95 de 0,90. Y para saber si el sistema penaliza a
+    hablantes de quechua o aimara alcanzan unos <b>30 a 40 niños por grupo</b>, siempre que la muestra se
+    estratifique a propósito.</p>
   </div>
 </section>
 
+<!-- ============ 6. PRINCIPIOS Y LO QUE FALTA ============ -->
 <section>
   <h3>Un principio de diseño</h3>
   <h2>Un audio que no se pudo evaluar no es un cero</h2>
-  <p>Si la grabación sale muda, o con demasiado ruido, o demasiado corta, el sistema responde
-  <b>«no evaluable», con el motivo, y nunca un cero</b>. La razón es simple: un cero es una afirmación sobre
-  un niño, y no se puede afirmar lo que no se escuchó. Sin esta regla el sistema mide la calidad del
-  micrófono y la llama fluidez, y un chico mal grabado puntúa peor que uno bien grabado.</p>
-  <p>Lo mismo con la regla de corte del protocolo: cuando alguien lee y no acierta ninguno de los primeros
-  diez ítems, <b>eso sí es un cero legítimo</b> y se registra distinto. Los dos casos se ven idénticos en la
-  salida del programa y significan cosas opuestas.</p>
+  <p>Si la grabación sale muda, con demasiado ruido o demasiado corta, el sistema responde <b>«no evaluable»,
+  con el motivo, y nunca un cero</b>. Un cero es una afirmación sobre un niño, y no se puede afirmar lo que no
+  se escuchó. Sin esta regla el sistema mide la calidad del micrófono y la llama fluidez, y un chico mal
+  grabado puntúa peor que uno bien grabado.</p>
 </section>
 
 <section>
@@ -246,197 +296,104 @@ audio{max-width:100%}
   vocales se funden al hablar, hay una sola en el audio, y el programa la marcaba como no leída. No es un error
   del lector: es español bien hablado, y rompía la medición.</p>
   <p>Nadie lo habría puesto en una lista de errores previsibles, porque no es un error. Eso es exactamente lo
-  que hace falta buscar con grabaciones reales, en el aula real y a la edad real. Y hay uno todavía más
-  importante por verificar: si el sistema penaliza el <b>intercambio de vocales e/i y o/u</b> propio de
-  hablantes de quechua y aimara, estaría midiendo lengua materna y llamándolo fluidez.</p>
-  <ul>
-    <li>Los modelos son de pesos abiertos, con licencias MIT y Apache 2.0, y corren en la propia computadora. <b>No hay costo por uso ni el audio sale a ningún servicio.</b></li>
-    <li>Del orden de 460 horas de procesador por cada 100.000 estudiantes, en una computadora común y sin placa de video.</li>
-    <li>El modelo es lo bastante chico para correr en un teléfono de gama media sin conexión.</li>
-  </ul>
+  que hace falta buscar con grabaciones reales, en el aula real y a la edad real. Y hay uno más importante por
+  verificar: si el sistema penaliza el <b>intercambio de vocales e/i y o/u</b> propio de hablantes de quechua y
+  aimara, estaría midiendo lengua materna y llamándolo fluidez.</p>
+  <p>Los modelos son de pesos abiertos, con licencias MIT y Apache 2.0, y corren en la propia computadora:
+  <b>no hay costo por uso ni el audio sale a ningún servicio</b>. Del orden de 460 horas de procesador por cada
+  100.000 estudiantes, en una computadora común y sin placa de video.</p>
 </section>
 
-<footer>
-  <div class="wrap" style="padding:0">
-    Especificación de subtareas, tiempos y reglas de corte adaptadas de
-    <i>Early Grade Reading Assessment Toolkit</i>, 2.ª edición, RTI International para USAID, 2016,
-    bajo licencia Creative Commons Attribution 4.0. Los estímulos son de elaboración propia y requieren
-    revisión de un especialista en lengua antes de cualquier uso en campo.
-  </div>
+<footer style="border-top:1px solid var(--line);padding:26px 0 70px;font-size:12.5px;color:var(--muted)">
+  Especificación de subtareas, tiempos y reglas de corte adaptadas de <i>Early Grade Reading Assessment
+  Toolkit</i>, 2.ª edición, RTI International para USAID, 2016, bajo licencia Creative Commons Attribution 4.0.
+  Los estímulos son de elaboración propia y requieren revisión de un especialista en lengua antes de cualquier
+  uso en campo.
 </footer>
 </div>
 
 <script>
-let D=null, vista=-1, sonando=null;  // abre mostrando la verdad, no un motor
+let D = null, mapa = [], enCurso = null;
 
-const VERDAD = -1;
-const DIFERENCIA = -2;
-
-function marcadoVerdad(){
-  const v = D.verdad, out = [];
-  const om = new Set(v.omitidas), su = new Set(Object.keys(v.sustituidas).map(Number)),
-        tr = new Set(Object.keys(v.truncadas).map(Number));
-  D.estimulo.palabras.forEach((w,i)=>{
-    let op = "acierto", oido = null;
-    if(om.has(i)) op="omision";
-    else if(su.has(i)){ op="sustitucion"; oido=v.sustituidas[i]; }
-    else if(tr.has(i)){ op="truncada"; oido=v.truncadas[i]; }
-    out.push({op, idx:i, texto:w, oido, t0:null, t1:null});
-  });
-  return out;
-}
-
-/* La vista que hace evidente el punto entero de la pagina: los dos programas escucharon
- * LA MISMA grabacion y no coincidieron. Marca solo las palabras donde difieren. */
-function marcadoDiferencia(){
-  const porIdx = m => Object.fromEntries(m.marcado.filter(x=>x.idx!=null).map(x=>[x.idx,x]));
-  const A = porIdx(D.motores[0]), B = porIdx(D.motores[1]);
-  const NOMBRE = {acierto:"leída", sustitucion:"sustituida", omision:"omitida"};
-  return D.estimulo.palabras.map((w,i)=>{
-    const a = A[i], b = B[i];
-    const difieren = a && b && a.op !== b.op;
-    return {
-      op: difieren ? "discrepa" : "coincide",
-      idx: i, texto: w,
-      oido: difieren ? `Whisper la dio por ${NOMBRE[a.op]||a.op} y wav2vec2 por ${NOMBRE[b.op]||b.op}` : null,
-      t0: a && a.t0 != null ? a.t0 : null, t1: a && a.t1 != null ? a.t1 : null
-    };
-  });
-}
-
-function tiemposDeReferencia(){
-  // Los tiempos salen del motor libre, que es el que da marcas por palabra.
-  const m = {};
-  D.motores[0].marcado.forEach(x=>{ if(x.idx!=null && x.t0!=null) m[x.idx]=[x.t0,x.t1]; });
-  return m;
-}
-
-function pintar(){
-  const ley = document.getElementById("leyenda-normal"), leyD = document.getElementById("leyenda-dif");
-  if (ley && leyD) { ley.classList.toggle("oculto", vista===DIFERENCIA); leyD.classList.toggle("oculto", vista!==DIFERENCIA); }
-  const cont = document.getElementById("pasaje");
+/* ---------- pintar un pasaje ---------- */
+function pintar(destino, marcado, conTiempos){
+  const cont = document.getElementById(destino);
   cont.innerHTML = "";
-  const marcado = vista===VERDAD ? marcadoVerdad()
-                : vista===DIFERENCIA ? marcadoDiferencia()
-                : D.motores[vista].marcado;
-  const tref = tiemposDeReferencia();
-  marcado.forEach(m=>{
+  marcado.forEach(m => {
     const s = document.createElement("span");
-    s.className = "p " + m.op + (m.nota ? " heredada" : "");
-    s.textContent = m.op==="insercion" ? "[+"+m.texto+"]" : m.texto;
-    const t = (m.t0!=null) ? [m.t0,m.t1] : (m.idx!=null ? tref[m.idx] : null);
-    const partes=[];
-    if(m.op==="discrepa") partes.push(m.oido);
-    else if(m.oido && m.op!=="acierto") partes.push("se leyó: "+m.oido);
-    if(m.conf!=null) partes.push("confianza "+m.conf);
-    if(m.nota) partes.push(m.nota);
-    if(t) partes.push(t[0]+" a "+t[1]+" s");
-    if(partes.length) s.title = partes.join(" · ");
-    if(t){ s.dataset.t0 = t[0]; s.dataset.t1 = t[1]; s.onclick = ()=>tocar(t[0],t[1],s); }
+    if (m.op === "insercion") { s.className = "p insercion"; s.textContent = "[+" + m.texto + "]"; }
+    else {
+      s.className = "p " + (m.op || "");
+      s.textContent = m.texto;
+      if (m.oido && m.op === "sustitucion") s.title = "se oyó: " + m.oido;
+      if (conTiempos && m.t0 != null) { s.dataset.t0 = m.t0; s.dataset.t1 = m.t1; }
+    }
     cont.append(s, document.createTextNode(" "));
   });
-  document.querySelectorAll("#sw button").forEach(b=>
-    b.setAttribute("aria-pressed", String(Number(b.dataset.v)===vista)));
-  construirMapa(); limpiarSeguimiento();
 }
 
-/* Seguimiento tipo karaoke. Es lo que hace entendible el marcado: uno aprieta reproducir
- * y ve iluminarse cada palabra en el momento en que suena, asi que puede comparar lo que
- * oye con lo que el programa entendio, sin tener que ir palabra por palabra. */
-let mapaTiempos = [];   // [{el, t0, t1}]
-let enCurso = null;
-
+/* ---------- seguimiento del audio ---------- */
 function construirMapa(){
-  mapaTiempos = [...document.querySelectorAll("#pasaje .p")]
+  mapa = [...document.querySelectorAll("#pasaje-limpio .p")]
     .map(el => ({ el, t0: parseFloat(el.dataset.t0), t1: parseFloat(el.dataset.t1) }))
-    .filter(x => !isNaN(x.t0))
-    .sort((a,b) => a.t0 - b.t0);
+    .filter(x => !isNaN(x.t0)).sort((a,b) => a.t0 - b.t0);
 }
-
 function seguir(){
-  /* getElementById y no $: el helper $ vive dentro del modulo, y un modulo no comparte
-   * ambito con el script clasico. Referenciarlo desde aca tira "$ is not defined" en
-   * silencio adentro de un listener, que es como estuvo roto hasta que se probo. */
   const a = document.getElementById("au");
   if (a.paused) return;
   const t = a.currentTime;
-  const cual = mapaTiempos.find(x => t >= x.t0 - 0.05 && t <= x.t1 + 0.05);
+  const cual = mapa.find(x => t >= x.t0 - 0.05 && t <= x.t1 + 0.05);
   if (cual !== enCurso) {
     if (enCurso) enCurso.el.classList.remove("siguiendo");
     enCurso = cual || null;
-    if (enCurso) {
-      enCurso.el.classList.add("siguiendo");
-      const r = enCurso.el.getBoundingClientRect();
-      if (r.top < 60 || r.bottom > innerHeight - 40)
-        enCurso.el.scrollIntoView({ block: "center", behavior: "smooth" });
-    }
+    if (enCurso) enCurso.el.classList.add("siguiendo");
   }
 }
+function limpiar(){ if (enCurso) enCurso.el.classList.remove("siguiendo"); enCurso = null; }
 
-function limpiarSeguimiento(){
-  if (enCurso) enCurso.el.classList.remove("siguiendo");
-  enCurso = null;
-}
-
-function tocar(t0,t1,el){
-  const a = document.getElementById("au");
-  if(sonando) sonando.classList.remove("sonando");
-  sonando = el; el.classList.add("sonando");
-  a.currentTime = Math.max(0, t0-0.06); a.play();
-  clearTimeout(a._p);
-  a._p = setTimeout(()=>{ a.pause(); el.classList.remove("sonando"); sonando=null; }, (t1-t0+0.2)*1000);
-}
-
-function numeros(){
-  const v = D.verdad, [lib,res] = D.motores;
-  const err = m => { const d = +(m.pcpm - v.pcpm).toFixed(1);
-    return `<div class="err ${d<0?"neg":"pos"}">${d>0?"+":""}${d} contra la verdad</div>`; };
-  document.getElementById("tres").innerHTML = `
-    <div class="n v"><div class="k">La verdad conocida</div>
-      <div class="g">${v.pcpm}<small> por minuto</small></div>
-      <div class="d">${v.correctas} de ${v.total} palabras. Lo sabemos porque nosotros pusimos los errores.</div></div>
-    <div class="n a"><div class="k">Whisper &middot; libre</div>
-      <div class="g">${lib.pcpm}<small> por minuto</small></div>
-      <div class="d">${lib.correctas} de ${v.total}. Transcribe sin saber qué había que leer.</div>${err(lib)}</div>
-    <div class="n b"><div class="k">wav2vec2 &middot; restringido</div>
-      <div class="g">${res.pcpm}<small> por minuto</small></div>
-      <div class="d">${res.correctas} de ${v.total}. Marca contra el texto que ya tiene.</div>${err(res)}</div>`;
-
-  document.getElementById("lectura").innerHTML =
-    `Uno se queda corto y el otro se pasa, y la verdad queda entre los dos. Difieren en
-     <b>${D.discrepancia} palabras por minuto</b> sobre la misma grabación.`;
-
-  document.getElementById("proc").textContent = D.estimulo.procedencia;
-}
-
-fetch("datos.json").then(r=>r.json()).then(d=>{
+/* ---------- arranque ---------- */
+fetch("datos.json").then(r => r.json()).then(d => {
   D = d;
-  window.FLUDATOS = d;   // el modulo de "probalo con tu voz" lee de aca
-  window.dispatchEvent(new CustomEvent("datos-listos"));
+  window.FLUDATOS = d;
   document.getElementById("au").src = d.audio;
-  const sw = document.getElementById("sw");
-  [[VERDAD,"La verdad"],[0,"Lo que entendió Whisper"],[1,"Lo que entendió wav2vec2"],[DIFERENCIA,"Dónde no coinciden"]].forEach(([v,t])=>{
-    const b=document.createElement("button"); b.dataset.v=v; b.textContent=t;
-    b.onclick=()=>{vista=v;pintar();}; sw.append(b);
-  });
-  numeros(); pintar();
+
+  /* el pasaje tal cual, con los tiempos escondidos para poder seguirlo */
+  const tiempos = {};
+  d.motores[0].marcado.forEach(m => { if (m.idx != null && m.t0 != null) tiempos[m.idx] = [m.t0, m.t1]; });
+  const limpio = d.estimulo.palabras.map((w,i) => ({
+    op: "", texto: w, t0: tiempos[i] ? tiempos[i][0] : null, t1: tiempos[i] ? tiempos[i][1] : null }));
+  pintar("pasaje-limpio", limpio, true);
+  pintar("pasaje-leer", d.estimulo.palabras.map(w => ({ op: "", texto: w })), false);
+  construirMapa();
+
+  /* lo que entendio el sistema: UNA sola vista, la del motor restringido */
+  pintar("pasaje-marcado", d.motores[1].marcado, false);
+
+  const v = d.verdad, [a, b] = d.motores;
+  const dif = m => { const x = +(m.pcpm - v.pcpm).toFixed(1); return (x > 0 ? "+" : "") + x; };
+  document.getElementById("n-verdad").innerHTML = v.pcpm + "<small> por minuto</small>";
+  document.getElementById("n-a").innerHTML = a.pcpm + "<small> por minuto</small>";
+  document.getElementById("d-a").innerHTML = "<b>" + a.nombre + ".</b> Transcribe sin saber qué había que leer. "
+    + a.correctas + " de " + v.total + ", " + dif(a) + " contra la verdad";
+  document.getElementById("n-b").innerHTML = b.pcpm + "<small> por minuto</small>";
+  document.getElementById("d-b").innerHTML = "<b>" + b.nombre + ".</b> Marca contra el texto que ya tiene. "
+    + b.correctas + " de " + v.total + ", " + dif(b) + " contra la verdad";
+  document.getElementById("pie-ejemplo").innerHTML =
+    "Los dos programas escucharon <b>la misma grabación</b> y el mismo texto, y difieren en <b>"
+    + d.discrepancia + " palabras por minuto</b>. Uno se queda corto y el otro se pasa. "
+    + "Un sistema de un solo programa habría reportado un número con total confianza y nadie se habría enterado.";
 });
 
-/* Reproductor completo. Existe porque sin el, si el clic por palabra falla, no hay
- * ninguna forma de escuchar la grabacion, y entonces el marcado no se entiende. */
 (() => {
   const a = document.getElementById("au");
   a.addEventListener("timeupdate", seguir);
-  a.addEventListener("pause", limpiarSeguimiento);
-  a.addEventListener("ended", limpiarSeguimiento);
+  a.addEventListener("pause", limpiar);
+  a.addEventListener("ended", limpiar);
 })();
 
 document.getElementById("btn-play").onclick = () => {
   const a = document.getElementById("au");
-  clearTimeout(a._p);
-  if (sonando) { sonando.classList.remove("sonando"); sonando = null; }
-  a.currentTime = 0;
-  a.play();
+  a.currentTime = 0; a.play();
 };
 </script>
 
@@ -445,16 +402,12 @@ document.getElementById("btn-play").onclick = () => {
 import { cargarModelo, evaluar, Op } from "./motor.js";
 
 const $ = s => document.querySelector(s);
-let rec = null, trozos = [], t0 = 0, tick = null;
-let modeloListo = null;   // promesa: se lanza al empezar a grabar
+let rec = null, trozos = [], t0 = 0, tick = null, modeloListo = null;
+const estado = t => { $("#estado-voz").textContent = t; };
 
-function estado(t) { $("#estado-voz").textContent = t; }
-
-/* El modelo pesa decenas de megas, pero grabar no lo necesita. Asi que la descarga
- * arranca JUNTO con la grabacion y ocurre mientras la persona lee. Para cuando termina
- * de leer, normalmente ya esta. Pedirle que descargue primero y grabe despues seria
- * hacerle esperar dos veces por algo que puede pasar una sola. */
-function empezarDescarga() {
+/* El modelo pesa decenas de megas, pero grabar no lo necesita. La descarga arranca JUNTO
+ * con la grabacion y ocurre mientras la persona lee, que es tiempo muerto perfecto. */
+function empezarDescarga(){
   if (modeloListo) return modeloListo;
   $("#barra").classList.remove("oculto");
   const vistos = {};
@@ -462,45 +415,38 @@ function empezarDescarga() {
     if (p.status === "progress" && p.file) {
       vistos[p.file] = p.progress || 0;
       const v = Object.values(vistos);
-      $("#barra-in").style.width = (v.reduce((a, b) => a + b, 0) / v.length) + "%";
+      $("#barra-in").style.width = (v.reduce((x,y) => x+y, 0) / v.length) + "%";
     }
   }).then(m => { $("#barra-in").style.width = "100%"; return m; });
   return modeloListo;
 }
 
-function reloj() {
+function reloj(){
   const s = (Date.now() - t0) / 1000;
   $("#reloj-voz").innerHTML = s.toFixed(0) + "<small> s</small>";
   $("#reloj-voz").classList.toggle("pasado", s > 60);
   if (s > 70) detener();
 }
 
-async function arrancar() {
+async function arrancar(){
   let stream;
   try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
   catch (e) { estado("No se pudo abrir el micrófono: " + e.message); return; }
-
   const yaEstaba = modeloListo !== null;
-  empezarDescarga();          // en paralelo, mientras lee
-  if (!yaEstaba) {
-    $("#btn-bajar").disabled = true;
-    $("#btn-bajar").textContent = "Descargando mientras leés";
-  }
-
+  empezarDescarga();
+  if (!yaEstaba) { $("#btn-bajar").disabled = true; $("#btn-bajar").textContent = "Descargando mientras leés"; }
   trozos = [];
   rec = new MediaRecorder(stream);
   rec.ondataavailable = ev => trozos.push(ev.data);
-  rec.onstop = async () => {
-    stream.getTracks().forEach(t => t.stop());
-    await procesar(new Blob(trozos, { type: "audio/webm" }));
-  };
+  rec.onstop = async () => { stream.getTracks().forEach(t => t.stop());
+                             await procesar(new Blob(trozos, { type: "audio/webm" })); };
   rec.start(); t0 = Date.now(); tick = setInterval(reloj, 100);
   $("#btn-grabar").dataset.e = "grabando"; $("#btxt").textContent = "Detener";
-  estado("Grabando. Leé el pasaje de arriba en voz alta.");
+  estado("Grabando. Leé el texto de arriba en voz alta.");
   $("#res-voz").classList.add("oculto");
 }
 
-function detener() {
+function detener(){
   if (!rec || rec.state === "inactive") return;
   clearInterval(tick); rec.stop();
   $("#btn-grabar").dataset.e = ""; $("#btn-grabar").disabled = true;
@@ -508,44 +454,77 @@ function detener() {
   estado("Procesando en tu navegador...");
 }
 
-async function procesar(blob) {
+async function procesar(blob){
   const t = performance.now();
   let r;
   try {
-    await modeloListo;        // casi siempre ya termino durante la lectura
+    await modeloListo;
     $("#barra").classList.add("oculto");
     $("#btn-bajar").textContent = "Modelo listo";
     r = await evaluar(blob, { palabras: window.FLUDATOS.estimulo.palabras, limite: 60 });
   } catch (e) {
-    estado("Error al procesar: " + e.message);
-    $("#btn-grabar").disabled = false;
-    return;
+    estado("Error al procesar: " + e.message); $("#btn-grabar").disabled = false; return;
   }
   const tardo = ((performance.now() - t) / 1000).toFixed(1);
   $("#btn-grabar").disabled = false;
-  estado(`Listo en ${tardo} s, sin salir de tu navegador.`);
-  mostrarVoz(r, tardo);
+  estado("Listo en " + tardo + " s, sin salir de tu navegador.");
+  mostrar(r, tardo);
 }
 
-/* Los dos caminos conviven: se puede bajar el modelo antes, o apretar grabar y que se
- * baje mientras uno lee. El segundo es el normal; el primero sirve con conexion lenta,
- * para no descubrir a mitad de la lectura que falta descargar. */
-$("#btn-bajar").onclick = async () => {
-  $("#btn-bajar").disabled = true;
-  $("#btn-bajar").textContent = "Descargando...";
-  try {
-    await empezarDescarga();
-    $("#btn-bajar").textContent = "Modelo listo";
-    $("#barra").classList.add("oculto");
-    estado("Modelo cargado. Ya podés grabar sin esperas.");
-  } catch (e) {
-    $("#btn-bajar").disabled = false;
-    $("#btn-bajar").textContent = "Descargar el modelo ahora";
-    estado("No se pudo cargar el modelo: " + e.message);
+function mostrar(r, tardo){
+  $("#res-voz").classList.remove("oculto");
+  const P = window.FLUDATOS.estimulo.palabras;
+
+  if (r.estado === "NO_EVALUABLE") {
+    $("#tres-voz").innerHTML = '<div class="dato r" style="grid-column:1/-1">' +
+      '<b style="font-size:24px">No evaluable</b><span>' + r.motivo +
+      '. <b>Esto no es un cero</b>: es la ausencia de una medición. Un audio que no se pudo escuchar no puede ' +
+      'puntuar peor que uno que sí.</span></div>';
+    $("#pasaje-voz").innerHTML = "";
+    $("#pie-voz").textContent = r.duracion.toFixed(1) + " s de audio, procesados en " + tardo + " s.";
+    return;
   }
+
+  const heredadas = r.pares.filter(p => p.nota).length;
+  $("#tres-voz").innerHTML =
+    '<div class="dato g"><b>' + r.pcpm + '<small> por minuto</small></b><span><b>Tu lectura.</b> ' +
+      r.correctas + ' de ' + r.intentadas + ' palabras, en ' + r.segundos + ' s contados</span></div>' +
+    '<div class="dato t"><b style="font-size:21px">whisper base</b><span>Corriendo en tu navegador, sin subir ' +
+      'nada a ningún servidor</span></div>' +
+    '<div class="dato o"><b>' + heredadas + '<small> palabras</small></b><span>Se fundieron con la vocal ' +
+      'anterior al hablar y heredaron su veredicto</span></div>';
+
+  pintar("pasaje-voz", r.pares.map(p => p.op === Op.INSERCION
+    ? { op: "insercion", texto: p.palabraHip }
+    : { op: p.op, texto: P[p.idxRef], oido: p.palabraHip }), false);
+
+  $("#pie-voz").textContent = r.duracion.toFixed(1) + " s de audio, procesados en " + tardo +
+    " s dentro de tu navegador. La grabación no se subió a ningún lado y no queda guardada.";
+}
+
+$("#btn-bajar").onclick = async () => {
+  $("#btn-bajar").disabled = true; $("#btn-bajar").textContent = "Descargando...";
+  try { await empezarDescarga(); $("#btn-bajar").textContent = "Modelo listo";
+        $("#barra").classList.add("oculto"); estado("Modelo cargado. Ya podés grabar sin esperas."); }
+  catch (e) { $("#btn-bajar").disabled = false;
+              $("#btn-bajar").textContent = "Descargar el modelo ahora";
+              estado("No se pudo cargar el modelo: " + e.message); }
 };
 
 $("#btn-grabar").onclick = () => (rec && rec.state === "recording" ? detener() : arrancar());
+
+/* pintar tambien se usa desde el modulo */
+function pintar(destino, marcado){
+  const cont = document.getElementById(destino);
+  cont.innerHTML = "";
+  marcado.forEach(m => {
+    const s = document.createElement("span");
+    if (m.op === "insercion") { s.className = "p insercion"; s.textContent = "[+" + m.texto + "]"; }
+    else { s.className = "p " + (m.op || ""); s.textContent = m.texto;
+           if (m.oido && m.op === "sustitucion") s.title = "se oyó: " + m.oido; }
+    cont.append(s, document.createTextNode(" "));
+  });
+}
 </script>
 </body>
 </html>
