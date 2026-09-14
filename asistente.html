@@ -73,9 +73,15 @@ input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
    evaluador tiene que poder seguir la fila con el dedo mientras el chico lee. */
 .grilla{display:grid;gap:5px;margin:4px 0 14px;font:19px/1.35 var(--sans);text-align:center}
 .grilla.letras{grid-template-columns:repeat(10,1fr);font-size:20px}
-.grilla .w{padding:7px 2px;display:block;overflow:hidden;text-overflow:ellipsis}
+/* Sin recorte ni puntos suspensivos: un item a medias es peor que un item chico. Los
+   digrafos (ch, rr, ll) tienen que leerse enteros o la prueba no es la prueba. */
+.grilla .w{padding:7px 2px;display:block}
 .grilla .w.quieta{background:var(--cream2);border-color:var(--line)}
-@media(max-width:420px){ .grilla{font-size:15px;gap:4px} .grilla.letras{font-size:17px} }
+@media(max-width:420px){
+  .grilla{font-size:15px;gap:3px}
+  .grilla.letras{font-size:15px}
+  .grilla .w{padding:7px 1px}
+}
 /* La linea marca el fin de los primeros diez items, que son los que deciden si la prueba
    se descontinua. */
 .grilla .w.corte{border-bottom:2px solid var(--ink)}
