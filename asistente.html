@@ -31,6 +31,12 @@ header .est{margin-left:auto;font:700 10px var(--mono);letter-spacing:.16em;text
 
 .paso{background:var(--cream2);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
 .paso.oculto{display:none}
+/* Solo existia `.paso.oculto`, asi que `.oculto` no ocultaba nada en el resto de la pagina:
+   la barra de descarga, el aviso de subtarea, el aviso de modo y el selector de modo del
+   pasaje se mostraban siempre. Descubierto el 2026-09-14 comprobando el estilo calculado y
+   no la clase: la clase estaba puesta, y no hacia nada.
+   Lleva !important porque varios de esos elementos traen su propio display (.btn es flex). */
+.oculto{display:none!important}
 .num{font:700 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
   display:block;margin-bottom:8px}
 h2{font-size:19px;font-weight:600;color:var(--ink2);letter-spacing:-.01em;margin-bottom:10px}
@@ -119,14 +125,19 @@ a{color:var(--teal)}
  * leyendo de la misma pantalla donde ya hay palabras tachadas en rojo. Esta vista es la
  * hoja del chico: los items solos, grandes, sin ninguna marca. Y se imprime, que es como
  * conviene aplicarlo de verdad. */
-.hoja{position:fixed;inset:0;z-index:50;background:#fff;overflow:auto;padding:16px;display:none}
-.hoja.abierta{display:block}
+/* La hoja es una columna fija: el encabezado arriba y los items ocupan todo lo que sobra,
+   asi el pie del modo de a uno no queda fuera de la pantalla. */
+.hoja{position:fixed;inset:0;z-index:50;background:#fff;padding:16px;display:none;
+  flex-direction:column}
+.hoja.abierta{display:flex}
+.hoja .cerrar,.hoja .modo{flex:0 0 auto}
+#hoja-items{flex:1 1 auto;min-height:0;overflow:auto}
 .hoja .items{display:grid;gap:6px;text-align:center;font:clamp(20px,5.2vw,40px)/1.25 var(--sans);color:#000;
   max-width:900px;margin:0 auto}
 .hoja .items span{padding:6px 2px}
 .hoja .corrido{font:clamp(21px,4.4vw,34px)/1.9 var(--sans);color:#000;max-width:900px;margin:0 auto}
 .hoja .cerrar{position:sticky;top:0;display:flex;gap:10px;justify-content:space-between;align-items:center;
-  background:#fff;padding-bottom:10px;margin-bottom:6px;max-width:900px;margin-inline:auto}
+  background:#fff;padding-bottom:10px;margin-bottom:6px;width:100%;max-width:900px;margin-inline:auto}
 .hoja .cerrar b{font:600 13px var(--sans);color:var(--muted)}
 /* los botones de la app son de ancho completo; aca van al lado, no apilados */
 .hoja .cerrar .btn{width:auto;display:inline-flex}
@@ -141,17 +152,23 @@ a{color:var(--teal)}
 }
 
 /* modo de a uno: un item por vez, grande, para pantalla chica */
-.hoja .modo{display:flex;gap:6px;margin:0 auto 14px;max-width:900px}
+.hoja .modo{display:flex;gap:6px;margin:0 auto 14px;width:100%;max-width:900px}
 .hoja .modo button{flex:1;font:600 13px var(--sans);padding:9px;border-radius:9px;cursor:pointer;
   border:1.5px solid var(--line);background:transparent;color:var(--muted)}
 .hoja .modo button.on{background:var(--ink);border-color:var(--ink);color:#fff}
-.uno{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:58vh;cursor:pointer;user-select:none}
-.uno .it{font:clamp(72px,26vw,180px)/1 var(--sans);color:#000;letter-spacing:-.02em}
-.uno .cuenta{font:600 13px var(--mono);color:var(--muted);letter-spacing:.1em;margin-top:26px}
-.uno .pista{font-size:13px;color:var(--muted);margin-top:8px}
-.volver{background:transparent;border:1.5px solid var(--line);border-radius:9px;color:var(--teal);
-  font:600 13px var(--sans);padding:8px 14px;margin-top:14px;cursor:pointer}
+/* El item ocupa la pantalla y queda centrado de verdad: el chico mira una sola cosa y toca
+   donde sea para avanzar. Los controles del evaluador quedan chicos y en los bordes. */
+.uno{position:relative;display:flex;align-items:center;justify-content:center;
+  height:100%;cursor:pointer;user-select:none;-webkit-user-select:none}
+.uno .it{font:clamp(120px,44vw,300px)/1 var(--sans);color:#000;letter-spacing:-.03em;
+  padding-bottom:6vh}
+.uno .pie{position:absolute;left:0;right:0;bottom:10px;display:flex;align-items:center;
+  justify-content:center;gap:16px;padding-left:76px;pointer-events:none}
+.uno .cuenta{font:600 13px var(--mono);color:var(--muted);letter-spacing:.1em}
+.uno .pista{font-size:13px;color:var(--muted)}
+.uno .fin{font:600 15px var(--sans);color:var(--teal)}
+.volver{position:absolute;left:0;bottom:6px;background:transparent;border:none;color:var(--muted);
+  font:600 13px var(--sans);padding:8px 10px;cursor:pointer;pointer-events:auto}
 @media print{ .hoja .modo,.volver{display:none} }
 </style>
 </head>
@@ -400,20 +417,27 @@ function pintarHoja(){
 
   if (actual.esPorItem && modoUno) {
     c.className = "uno";
+    const ultimo = idxUno >= actual.palabras.length - 1;
     const it = document.createElement("div");
     it.className = "it"; it.textContent = actual.palabras[idxUno];
-    const n = document.createElement("div");
+
+    const pie = document.createElement("div");
+    pie.className = "pie";
+    const n = document.createElement("span");
     n.className = "cuenta"; n.textContent = (idxUno + 1) + " / " + actual.palabras.length;
-    const p = document.createElement("div");
-    p.className = "pista"; p.textContent = idxUno ? "Tocá para el siguiente" : "Tocá la pantalla para avanzar";
-    c.append(it, n, p);
+    const p = document.createElement("span");
+    p.className = ultimo ? "fin" : "pista";
+    p.textContent = ultimo ? "Último" : "Tocá para avanzar";
+    pie.append(n, p);
+
     if (idxUno) {
       const v = document.createElement("button");
-      v.className = "volver"; v.textContent = "Volver uno";
+      v.className = "volver"; v.textContent = "‹ Volver";
       v.onclick = ev => { ev.stopPropagation(); idxUno--; pintarHoja(); };
-      c.append(v);
+      pie.append(v);
     }
-    c.onclick = () => { if (idxUno < actual.palabras.length - 1) { idxUno++; pintarHoja(); } };
+    c.append(it, pie);
+    c.onclick = () => { if (!ultimo) { idxUno++; pintarHoja(); } };
     return;
   }
 
@@ -443,6 +467,9 @@ function abrirHoja(){
 function pintarModo(){
   $("#m-hoja").classList.toggle("on", !modoUno);
   $("#m-uno").classList.toggle("on", modoUno);
+  /* Imprimir no tiene sentido de a uno, y es un boton menos para que el chico toque
+     sin querer mientras tiene el telefono en la mano. */
+  $("#btn-imprimir").classList.toggle("oculto", modoUno && actual && actual.esPorItem);
   $("#aviso-modo").classList.toggle("oculto", !(modoUno && actual && actual.esPorItem));
 }
 
