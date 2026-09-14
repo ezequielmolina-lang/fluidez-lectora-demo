@@ -94,6 +94,10 @@ a{color:var(--teal)}
 .barra{height:5px;background:var(--line);border-radius:3px;margin-top:14px;overflow:hidden}
 #barra-in{height:100%;width:0;background:var(--teal);transition:width .2s}
 #pasaje-voz{font:19px/1.95 var(--sans);margin-top:18px}
+.reproductor{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 0;
+  padding:14px 16px;background:var(--cream);border:1px solid var(--line);border-radius:10px}
+.reproductor .btn{padding:11px 18px;font-size:14px}
+audio{max-width:100%}
 </style>
 </head>
 <body>
@@ -145,7 +149,10 @@ a{color:var(--teal)}
     </div>
     <div class="pie" id="proc"></div>
   </div>
-  <audio id="au" preload="metadata"></audio>
+  <div class="reproductor">
+    <button class="btn" id="btn-play">&#9654;&nbsp; Escuchar la lectura completa</button>
+    <audio id="au" controls preload="auto" style="flex:1;min-width:240px;height:38px"></audio>
+  </div>
 </section>
 
 <section>
@@ -333,6 +340,16 @@ fetch("datos.json").then(r=>r.json()).then(d=>{
   });
   numeros(); pintar();
 });
+
+/* Reproductor completo. Existe porque sin el, si el clic por palabra falla, no hay
+ * ninguna forma de escuchar la grabacion, y entonces el marcado no se entiende. */
+document.getElementById("btn-play").onclick = () => {
+  const a = document.getElementById("au");
+  clearTimeout(a._p);
+  if (sonando) { sonando.classList.remove("sonando"); sonando = null; }
+  a.currentTime = 0;
+  a.play();
+};
 </script>
 
 <script type="module">
