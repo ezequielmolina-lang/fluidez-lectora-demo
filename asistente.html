@@ -66,6 +66,26 @@ input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
    text-decoration-thickness:2px}
 .w.tocada{border-color:var(--ink)}
 .w:active{transform:scale(.94)}
+.w.quieta{background:transparent;color:var(--ink2);cursor:default;border-color:transparent}
+
+/* Las cuatro subtareas que no son el pasaje van en grilla, como la hoja de papel del
+   evaluador: diez columnas para letras, cinco para lo demas. No es estetica, es que el
+   evaluador tiene que poder seguir la fila con el dedo mientras el chico lee. */
+.grilla{display:grid;gap:5px;margin:4px 0 14px;font:19px/1.35 var(--sans);text-align:center}
+.grilla.letras{grid-template-columns:repeat(10,1fr);font-size:20px}
+.grilla .w{padding:7px 2px;display:block;overflow:hidden;text-overflow:ellipsis}
+.grilla .w.quieta{background:var(--cream2);border-color:var(--line)}
+@media(max-width:420px){ .grilla{font-size:15px;gap:4px} .grilla.letras{font-size:17px} }
+/* La linea marca el fin de los primeros diez items, que son los que deciden si la prueba
+   se descontinua. */
+.grilla .w.corte{border-bottom:2px solid var(--ink)}
+
+.consigna{font-size:14.5px;color:var(--body);background:var(--cream2);border:1px solid var(--line);
+  border-radius:10px;padding:11px 13px;margin-bottom:12px}
+.consigna b{color:var(--ink2)}
+.corte-aviso{background:#fff8e6;border:1px solid #f0dfae;border-radius:10px;padding:14px;
+  font-size:14px;color:#5b4406;line-height:1.5}
+.corte-aviso b{color:#7a5a06}
 
 .marcador{display:flex;gap:10px;margin:14px 0}
 .mk{flex:1;background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
@@ -113,7 +133,9 @@ a{color:var(--teal)}
   <div class="paso oculto" id="paso2">
     <span class="num">Paso 2</span>
     <h2 id="titulo-prueba">Que el estudiante lea en voz alta</h2>
+    <p class="consigna" id="consigna"></p>
     <div class="pasaje" id="pasaje-lectura"></div>
+    <div class="nota oculto" id="aviso-subtarea"></div>
     <div class="reloj" id="reloj">0<small> s</small></div>
     <div class="aviso" id="aviso-grabar">Tocá grabar cuando el estudiante esté listo.</div>
     <button class="btn" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar</span></button>
@@ -131,7 +153,7 @@ a{color:var(--teal)}
     <div id="alerta-noeval"></div>
     <div class="pasaje" id="pasaje-revisar"></div>
     <div class="marcador">
-      <div class="mk g"><b id="m-pcpm">—</b><span>palabras/min</span></div>
+      <div class="mk g"><b id="m-pcpm">—</b><span id="u-pcpm">palabras/min</span></div>
       <div class="mk"><b id="m-correctas">—</b><span>correctas</span></div>
       <div class="mk"><b id="m-cambios">0</b><span>correcciones</span></div>
     </div>
@@ -161,7 +183,7 @@ a{color:var(--teal)}
 </div>
 
 <script type="module">
-import { cargarModelo, evaluar, Op } from "./motor.js";
+import { cargarModelo, evaluarTarea, Op } from "./motor.js";
 
 const $ = s => document.querySelector(s);
 const CLAVE = "fluidez.registros.v1";
@@ -173,17 +195,54 @@ let modeloListo = null, resultado = null, marcas = [], marcasMaquina = [], audio
 const NOMBRE = { letras:"Sonidos de letras", silabas:"Sílabas", palabras:"Palabras",
                  pseudopalabras:"Palabras sin sentido", pasaje:"Lectura de un pasaje" };
 
+/* Lo que el evaluador le dice al chico antes de empezar, resumido. La consigna completa y el
+   ítem de práctica están en el protocolo; acá va lo mínimo para que la prueba se aplique
+   igual en dos escuelas distintas. */
+const CONSIGNA = {
+  letras: "<b>Decí el sonido de cada letra</b>, no su nombre. Empezá acá y seguí de a una, de izquierda a derecha.",
+  silabas: "<b>Leé estas sílabas en voz alta</b>, lo mejor que puedas. Algunas no forman palabras.",
+  palabras: "<b>Leé estas palabras en voz alta</b>, una por una, sin saltearte ninguna.",
+  pseudopalabras: "<b>Estas no son palabras de verdad</b>. Leelas igual, como si lo fueran.",
+  pasaje: "<b>Leé este texto en voz alta</b>, como si le contaras el cuento a alguien.",
+};
+
+/* Dónde el reconocedor libre anda mal, dicho antes de que el evaluador vea el borrador.
+   No es humildad decorativa: si el borrador viene malo y no se avisa, el evaluador deja de
+   revisarlo y empieza a firmarlo. */
+const AVISO = {
+  letras: "El reconocedor transcribe palabras, no sonidos sueltos: acá el borrador va a venir " +
+          "mal casi siempre y vas a corregir casi todo. Es la subtarea que más necesita un " +
+          "modelo entrenado en fonemas, y está incluida justamente para medir cuánto falta.",
+  silabas: "Las sílabas sueltas son lo peor medido en todos los estudios publicados (23% de " +
+           "error en Tanzania, el acuerdo más bajo en SARA). Esperá un borrador flojo.",
+  pseudopalabras: "Las palabras sin sentido son donde los evaluadores humanos menos coinciden " +
+           "entre sí, así que acá el borrador de la máquina es una segunda opinión útil.",
+};
+
+/* Cuántas columnas tiene la grilla de cada subtarea, igual que en la hoja de papel. */
+const COLUMNAS = { letras: 10, silabas: 5, palabras: 5, pseudopalabras: 5 };
+const ITEMS_CORTE = 10;
+
 async function cargarEstimulos(){
-  const d = await (await fetch("datos.json")).json();
-  /* Por ahora el asistente trae el pasaje del banco de pruebas. Agregar los demas es
-     agregar archivos de estimulo, no tocar codigo. */
-  estimulos = [{ id: d.estimulo.id, tarea: "pasaje", limite: 60, palabras: d.estimulo.palabras }];
+  /* Las seis pruebas salen del banco del proyecto. Agregar una es agregar una entrada al
+     archivo, no tocar código. */
+  const bruto = await (await fetch("estimulos.json")).json();
+  estimulos = bruto.map(e => ({ id: e.id, tarea: e.tarea, limite: e.limite,
+                                palabras: e.palabras, esPorItem: e.es_por_item }));
+  const cuantas = {}, visto = {};
+  estimulos.forEach(e => cuantas[e.tarea] = (cuantas[e.tarea] || 0) + 1);
   const sel = $("#sel");
   estimulos.forEach(e => {
+    const k = visto[e.tarea] = (visto[e.tarea] || 0) + 1;
     const o = document.createElement("option");
-    o.value = e.id; o.textContent = NOMBRE[e.tarea] + " · " + e.palabras.length + " palabras";
+    o.value = e.id;
+    o.textContent = NOMBRE[e.tarea] + (cuantas[e.tarea] > 1 ? " · forma " + "ABCD"[k-1] : "")
+                  + " · " + e.palabras.length + (e.esPorItem ? " ítems" : " palabras");
     sel.append(o);
   });
+  /* Arranca en el pasaje: es la subtarea que da el PPM y la única que tiene grabación de
+     ejemplo para el modo demostración. */
+  sel.value = "pasaje_2do_a";
 }
 
 /* ---------------- paso 1 ---------------- */
@@ -199,14 +258,39 @@ $("#btn-empezar").onclick = () => {
   empezarDescarga();
 };
 
-function pintarLectura(){
-  const c = $("#pasaje-lectura"); c.innerHTML = "";
-  actual.palabras.forEach(w => {
+/* Un solo pintor para los dos formatos, porque la diferencia es de presentación y no de
+ * lógica: el pasaje va de corrido y las otras cuatro subtareas van en grilla. `marcas` en
+ * null significa "para leer", o sea el paso 2, donde nada se toca. */
+function pintarPalabras(cont, marcas, alTocar){
+  cont.innerHTML = "";
+  cont.className = actual.esPorItem ? "grilla " + actual.tarea : "pasaje";
+  if (actual.esPorItem && actual.tarea !== "letras")
+    cont.style.gridTemplateColumns = "repeat(" + COLUMNAS[actual.tarea] + ",1fr)";
+  else cont.style.gridTemplateColumns = "";
+  const cols = COLUMNAS[actual.tarea] || 0;
+  actual.palabras.forEach((w, i) => {
     const s = document.createElement("span");
-    s.className = "w"; s.style.background = "transparent"; s.style.color = "var(--ink2)";
-    s.style.cursor = "default"; s.textContent = w;
-    c.append(s, document.createTextNode(" "));
+    s.className = "w";
+    /* La línea bajo el ítem 10 sólo se dibuja en la última fila del bloque, así queda
+       como una regla horizontal y no como un borde suelto. */
+    if (actual.esPorItem && i < ITEMS_CORTE && i >= ITEMS_CORTE - cols) s.classList.add("corte");
+    if (marcas) {
+      if (!marcas[i]) s.classList.add("mal");
+      if (marcas[i] !== marcasMaquina[i]) s.classList.add("tocada");
+      s.onclick = () => alTocar(i);
+    } else s.classList.add("quieta");
+    s.textContent = w;
+    cont.append(s);
+    if (!actual.esPorItem) cont.append(document.createTextNode(" "));
   });
+}
+
+function pintarLectura(){
+  $("#consigna").innerHTML = CONSIGNA[actual.tarea];
+  const av = $("#aviso-subtarea");
+  av.textContent = AVISO[actual.tarea] || "";
+  av.classList.toggle("oculto", !AVISO[actual.tarea]);
+  pintarPalabras($("#pasaje-lectura"), null);
 }
 
 /* ---------------- descarga del modelo, en paralelo ---------------- */
@@ -243,7 +327,9 @@ const DEMO = new URLSearchParams(location.search).get("demo") === "1";
 if (DEMO) $("#aviso-grabar").textContent = "Modo demostración: usa una grabación de ejemplo.";
 
 $("#btn-grabar").onclick = async () => {
-  if (DEMO) {
+  /* La grabación de ejemplo es de un pasaje concreto. Para las demás subtareas no hay
+     ejemplo, así que el modo demostración cae al micrófono en vez de mentir. */
+  if (DEMO && actual.id === "pasaje_2do_a") {
     $("#btn-grabar").disabled = true;
     $("#aviso-grabar").textContent = "Escuchando la grabación de ejemplo...";
     empezarDescarga();
@@ -283,7 +369,7 @@ function detener(){
 async function procesar(){
   try {
     await modeloListo;
-    resultado = await evaluar(audioBlob, { palabras: actual.palabras, limite: actual.limite });
+    resultado = await evaluarTarea(audioBlob, actual);
   } catch (e) {
     $("#aviso-grabar").textContent = "Error al procesar: " + e.message;
     $("#btn-grabar").disabled = false; return;
@@ -302,29 +388,35 @@ async function procesar(){
 }
 
 /* ---------------- paso 3: revisar y corregir ---------------- */
+/* Regla de corte del protocolo, aplicada a lo que marcó el HUMANO. La máquina propone y el
+ * evaluador dispone: si corrigió y aparecieron aciertos en los primeros diez, la prueba deja
+ * de estar descontinuada, y al revés. */
+function descontinuadaPorHumano(){
+  return actual.esPorItem && marcas.slice(0, ITEMS_CORTE).every(m => !m);
+}
+
 function pintarRevision(){
-  const c = $("#pasaje-revisar"); c.innerHTML = "";
-  actual.palabras.forEach((w, i) => {
-    const s = document.createElement("span");
-    s.className = "w" + (marcas[i] ? "" : " mal") + (marcas[i] !== marcasMaquina[i] ? " tocada" : "");
-    s.textContent = w;
-    s.onclick = () => { marcas[i] = !marcas[i]; pintarRevision(); };
-    c.append(s, document.createTextNode(" "));
-  });
+  pintarPalabras($("#pasaje-revisar"), marcas, i => { marcas[i] = !marcas[i]; pintarRevision(); });
 
   const noEval = resultado.estado === "NO_EVALUABLE";
   $("#alerta-noeval").innerHTML = noEval
     ? `<div class="noeval"><b>La máquina no pudo evaluar este audio</b>: ${resultado.motivo}.
        Eso <b>no es un cero</b>. Marcá vos las palabras o volvé a grabar.</div>`
+    : descontinuadaPorHumano()
+    ? `<div class="corte-aviso"><b>Prueba descontinuada</b>: ningún acierto en los primeros
+       ${ITEMS_CORTE} ítems, los que están sobre la línea. Esto <b>sí es un cero</b>, y es del
+       protocolo: se lo escuchó intentar. Es lo contrario de un audio que no se pudo evaluar.</div>`
     : "";
 
   const correctas = marcas.filter(Boolean).length;
   const seg = Math.max(resultado.segundos || 0, 1);
-  $("#m-pcpm").textContent = Math.round(correctas * 60 / seg);
+  const cortada = descontinuadaPorHumano();
+  $("#u-pcpm").textContent = actual.esPorItem ? "ítems/min" : "palabras/min";
+  $("#m-pcpm").textContent = cortada ? 0 : Math.round(correctas * 60 / seg);
   $("#m-correctas").textContent = correctas + "/" + actual.palabras.length;
   $("#m-cambios").textContent = marcas.filter((m, i) => m !== marcasMaquina[i]).length;
   $("#pie-revisar").textContent =
-    `${resultado.duracion.toFixed(1)} s de audio · ${seg.toFixed(1)} s contados · ` +
+    `${resultado.duracion.toFixed(1)} s de audio · ${seg.toFixed(1)} s de lectura contados · ` +
     `la máquina había marcado ${marcasMaquina.filter(Boolean).length} correctas`;
 }
 
@@ -337,11 +429,13 @@ $("#btn-guardar").onclick = () => {
     id: Date.now(),
     codigo: $("#est-cabecera").textContent,
     estimulo: actual.id,
+    tarea: actual.tarea,
     fecha: new Date().toISOString(),
     duracion: +resultado.duracion.toFixed(1),
     segundos: +seg.toFixed(2),
-    pcpm_humano: Math.round(correctas * 60 / seg),
+    pcpm_humano: descontinuadaPorHumano() ? 0 : Math.round(correctas * 60 / seg),
     correctas_humano: correctas,
+    estado_humano: descontinuadaPorHumano() ? "DESCONTINUADO" : "OK",
     pcpm_maquina: resultado.pcpm,
     correctas_maquina: marcasMaquina.filter(Boolean).length,
     estado_maquina: resultado.estado,
@@ -365,7 +459,9 @@ function volverAlInicio(){
   $("#codigo").value = ""; $("#codigo").focus();
   $("#est-cabecera").textContent = "";
   $("#reloj").innerHTML = "0<small> s</small>";
-  $("#aviso-grabar").textContent = "Tocá grabar cuando el estudiante esté listo.";
+  $("#aviso-grabar").textContent = DEMO
+    ? "Modo demostración: el pasaje usa una grabación de ejemplo; las demás pruebas, el micrófono."
+    : "Tocá grabar cuando el estudiante esté listo.";
   scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -397,8 +493,9 @@ function bajar(nombre, texto, tipo){
 $("#btn-csv").onclick = () => {
   const todos = leer();
   if (!todos.length) return;
-  const cols = ["codigo","estimulo","fecha","duracion","segundos","pcpm_humano","correctas_humano",
-                "pcpm_maquina","correctas_maquina","estado_maquina","correcciones"];
+  const cols = ["codigo","estimulo","tarea","fecha","duracion","segundos","pcpm_humano",
+                "correctas_humano","estado_humano","pcpm_maquina","correctas_maquina",
+                "estado_maquina","correcciones"];
   const csv = [cols.join(",")].concat(
     todos.map(r => cols.map(c => JSON.stringify(r[c] ?? "")).join(","))).join("\n");
   bajar("fluidez.csv", csv, "text/csv");

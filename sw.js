@@ -8,9 +8,9 @@
  * Storage con su propia clave. Esto cachea el armazon de la app, que es lo que permite que
  * abra sin señal.
  */
-const CACHE = "fluidez-v1";
-const ARMAZON = ["./", "./index.html", "./motor.js", "./datos.json", "./lectura.mp3",
-                 "./manifest.json", "./icono.svg"];
+const CACHE = "fluidez-v2";
+const ARMAZON = ["./", "./index.html", "./asistente.html", "./motor.js", "./datos.json",
+                 "./estimulos.json", "./lectura.mp3", "./manifest.json", "./icono.svg"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARMAZON)).then(() => self.skipWaiting()));

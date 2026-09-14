@@ -120,18 +120,26 @@ export function puntuar(pares, tiempos, duracion, limite = 60) {
     return { estado: "NO_EVALUABLE", pcpm: null, correctas: 0, intentadas: nRef, segundos: duracion,
              motivo: `sin habla reconocible en ${duracion.toFixed(1)} s de audio`, pares };
 
-  let correctas = 0, finUltima = 0;
+  let correctas = 0;
   for (const p of pares) {
     if (p.op !== Op.ACIERTO || p.idxHip === null || p.idxHip >= tiempos.length) continue;
-    const fin = tiempos[p.idxHip][1];
-    if (fin > limite) continue;
+    if (tiempos[p.idxHip][1] > limite) continue;
     correctas++;
-    finUltima = Math.max(finUltima, fin);
   }
 
-  /* El denominador es el tiempo que efectivamente tardo, no 60 fijos: usar siempre 60
-   * castigaria al lector rapido que termina el pasaje en 20 segundos. */
-  const segundos = Math.min(Math.max(finUltima, DURACION_MINIMA_S), limite);
+  /* EL DENOMINADOR ES CUANDO DEJO DE LEER, NO CUANDO ACERTO POR ULTIMA VEZ.
+   *
+   * Es el cronometro del evaluador: se detiene cuando el chico termina o cuando suenan los
+   * 60 segundos, sin importar si las ultimas palabras las leyo bien o mal. Medir hasta el
+   * ultimo ACIERTO parece equivalente y no lo es: a quien lee todo y se traba en el tramo
+   * final le acorta el denominador y le INFLA el puntaje, y el error crece con la cantidad
+   * de errores, o sea que favorece mas a quien peor lee.
+   *
+   * Tampoco puede usarse 60 fijo: castigaria al lector rapido que termina en 20 segundos. */
+  let finHabla = 0;
+  for (const [, fin] of tiempos) if (fin <= limite) finHabla = Math.max(finHabla, fin);
+  if (finHabla <= 0) finHabla = duracion;
+  const segundos = Math.min(Math.max(finHabla, DURACION_MINIMA_S), limite);
   return { estado: "OK", pcpm: Math.round((correctas * 60) / segundos * 10) / 10,
            correctas, intentadas: nRef, segundos: Math.round(segundos * 100) / 100, motivo: null, pares };
 }
@@ -224,5 +232,43 @@ export async function evaluar(blob, estimulo) {
   let pares = alinear(refNorm, hip.palabras);
   pares = aplicarSinalefa(pares, estimulo.palabras);
   const r = puntuar(pares, hip.tiempos, duracion, estimulo.limite || 60);
+  return { ...r, duracion, tiempos: hip.tiempos, transcripcion: hip.texto };
+}
+
+/* ---------------------------------------------------------------- tareas por item */
+
+const ITEMS_REGLA_CORTE = 10;
+
+/* Puntaje de letras, silabas, palabras y pseudopalabras.
+ *
+ * Se diferencia del pasaje en la REGLA DE CORTE TEMPRANO del protocolo de EGRA: si el nino
+ * no acierta ninguno de los primeros 10 items, se interrumpe la subtarea.
+ *
+ * LA DISTINCION QUE IMPORTA: "descontinuado" es un cero LEGITIMO, porque se lo oyo intentar
+ * y no acerto. "No evaluable" es la ausencia de una medicion. Los dos se ven identicos en la
+ * salida del reconocedor (cero aciertos) y significan cosas opuestas, asi que la regla de
+ * corte SOLO se aplica cuando ya se verifico que habia habla. Si no, bastaria un microfono
+ * malo para dejar registrado que un chico no reconoce ninguna letra.
+ */
+export function puntuarItems(pares, tiempos, duracion, limite = 60) {
+  const base = puntuar(pares, tiempos, duracion, limite);
+  if (base.estado === "NO_EVALUABLE") return base;
+
+  const primeros = pares.filter(p => p.idxRef !== null && p.idxRef < ITEMS_REGLA_CORTE);
+  if (primeros.length && !primeros.some(p => p.op === Op.ACIERTO))
+    return { ...base, estado: "DESCONTINUADO", pcpm: 0, correctas: 0,
+             motivo: `ninguna respuesta correcta en los primeros ${ITEMS_REGLA_CORTE} ítems` };
+  return base;
+}
+
+/* Camino completo para cualquiera de las cinco subtareas. */
+export async function evaluarTarea(blob, estimulo) {
+  const { audio, duracion } = await aFloat32_16k(blob);
+  const hip = await transcribir(audio);
+  const refNorm = estimulo.palabras.map(normalizar);
+  let pares = alinear(refNorm, hip.palabras);
+  if (!estimulo.esPorItem) pares = aplicarSinalefa(pares, estimulo.palabras);
+  const puntuador = estimulo.esPorItem ? puntuarItems : puntuar;
+  const r = puntuador(pares, hip.tiempos, duracion, estimulo.limite || 60);
   return { ...r, duracion, tiempos: hip.tiempos, transcripcion: hip.texto };
 }
