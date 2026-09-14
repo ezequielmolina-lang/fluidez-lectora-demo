@@ -66,6 +66,9 @@ section{margin-bottom:40px}
 .insercion{background:var(--rojo-f);color:var(--rojo);font-size:.8em;vertical-align:.12em}
 .heredada{box-shadow:inset 0 -2px 0 var(--teal)}
 .sonando{outline:2px solid var(--teal);outline-offset:1px;background:#e8eef6 !important}
+.siguiendo{outline:2px solid var(--ink);outline-offset:2px;box-shadow:0 0 0 4px rgba(19,48,58,.10)}
+.coincide{color:#b5b0a6}
+.discrepa{background:#efe3c9;color:#6b4a00;font-weight:600;box-shadow:inset 0 -2px 0 var(--gold2)}
 
 .leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:18px;align-items:center}
 .pie{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:18px;line-height:1.5}
@@ -97,6 +100,9 @@ a{color:var(--teal)}
 .reproductor{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 0;
   padding:14px 16px;background:var(--cream);border:1px solid var(--line);border-radius:10px}
 .reproductor .btn{padding:11px 18px;font-size:14px}
+.btn.sec{background:transparent;color:var(--teal);border:1px solid var(--line);padding:11px 18px;font-size:13.5px}
+.btn.sec:hover{filter:none;border-color:var(--teal)}
+.btn.sec:disabled{background:transparent;color:var(--muted);border-color:var(--line)}
 audio{max-width:100%}
 </style>
 </head>
@@ -139,7 +145,12 @@ audio{max-width:100%}
     <h3>El pasaje</h3>
     <div class="sw" id="sw"></div>
     <div id="pasaje"></div>
-    <div class="leyenda">
+    <div class="leyenda oculto" id="leyenda-dif">
+      <span class="p discrepa">acá los dos programas no coinciden</span>
+      <span class="p coincide">acá coinciden</span>
+      <span style="margin-left:auto">Misma grabación, distinto veredicto. Pasá el cursor para ver qué dijo cada uno.</span>
+    </div>
+    <div class="leyenda" id="leyenda-normal">
       <span class="p acierto">leída</span>
       <span class="p sustitucion">sustituida</span>
       <span class="p truncada">leída a medias</span>
@@ -159,14 +170,15 @@ audio{max-width:100%}
   <div class="card" id="tarjeta-voz">
     <h3>Probalo vos</h3>
     <h2>Leé el pasaje en voz alta y mirá qué entiende</h2>
-    <p style="max-width:660px">El modelo se descarga una sola vez y <b>corre dentro de tu navegador</b>: la
-    grabación no se sube a ningún servidor ni queda guardada en ninguna parte. Después de la primera vez
+    <p style="max-width:660px">Apretá grabar y leé el pasaje de arriba. <b>El modelo se descarga mientras
+    estás leyendo</b>, así que no hay que esperar: cuando terminás, puntúa. Todo <b>corre dentro de tu
+    navegador</b>, la grabación no se sube a ningún servidor ni queda guardada. Después de la primera vez
     funciona incluso sin internet.</p>
 
     <div class="voz-ctl">
-      <button class="btn" id="btn-cargar">Activar el micrófono y descargar el modelo</button>
-      <button class="btn oculto" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar</span></button>
-      <div class="reloj oculto" id="reloj-voz">0<small> s</small></div>
+      <button class="btn" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar y puntuar</span></button>
+      <button class="btn sec" id="btn-bajar">Descargar el modelo ahora</button>
+      <div class="reloj" id="reloj-voz">0<small> s</small></div>
       <div class="estado" id="estado-voz"></div>
     </div>
     <div class="barra oculto" id="barra"><div id="barra-in"></div></div>
@@ -252,6 +264,7 @@ audio{max-width:100%}
 let D=null, vista=-1, sonando=null;  // abre mostrando la verdad, no un motor
 
 const VERDAD = -1;
+const DIFERENCIA = -2;
 
 function marcadoVerdad(){
   const v = D.verdad, out = [];
@@ -267,6 +280,24 @@ function marcadoVerdad(){
   return out;
 }
 
+/* La vista que hace evidente el punto entero de la pagina: los dos programas escucharon
+ * LA MISMA grabacion y no coincidieron. Marca solo las palabras donde difieren. */
+function marcadoDiferencia(){
+  const porIdx = m => Object.fromEntries(m.marcado.filter(x=>x.idx!=null).map(x=>[x.idx,x]));
+  const A = porIdx(D.motores[0]), B = porIdx(D.motores[1]);
+  const NOMBRE = {acierto:"leída", sustitucion:"sustituida", omision:"omitida"};
+  return D.estimulo.palabras.map((w,i)=>{
+    const a = A[i], b = B[i];
+    const difieren = a && b && a.op !== b.op;
+    return {
+      op: difieren ? "discrepa" : "coincide",
+      idx: i, texto: w,
+      oido: difieren ? `Whisper la dio por ${NOMBRE[a.op]||a.op} y wav2vec2 por ${NOMBRE[b.op]||b.op}` : null,
+      t0: a && a.t0 != null ? a.t0 : null, t1: a && a.t1 != null ? a.t1 : null
+    };
+  });
+}
+
 function tiemposDeReferencia(){
   // Los tiempos salen del motor libre, que es el que da marcas por palabra.
   const m = {};
@@ -275,9 +306,13 @@ function tiemposDeReferencia(){
 }
 
 function pintar(){
+  const ley = document.getElementById("leyenda-normal"), leyD = document.getElementById("leyenda-dif");
+  if (ley && leyD) { ley.classList.toggle("oculto", vista===DIFERENCIA); leyD.classList.toggle("oculto", vista!==DIFERENCIA); }
   const cont = document.getElementById("pasaje");
   cont.innerHTML = "";
-  const marcado = vista===VERDAD ? marcadoVerdad() : D.motores[vista].marcado;
+  const marcado = vista===VERDAD ? marcadoVerdad()
+                : vista===DIFERENCIA ? marcadoDiferencia()
+                : D.motores[vista].marcado;
   const tref = tiemposDeReferencia();
   marcado.forEach(m=>{
     const s = document.createElement("span");
@@ -285,16 +320,56 @@ function pintar(){
     s.textContent = m.op==="insercion" ? "[+"+m.texto+"]" : m.texto;
     const t = (m.t0!=null) ? [m.t0,m.t1] : (m.idx!=null ? tref[m.idx] : null);
     const partes=[];
-    if(m.oido && m.op!=="acierto") partes.push("se leyó: "+m.oido);
+    if(m.op==="discrepa") partes.push(m.oido);
+    else if(m.oido && m.op!=="acierto") partes.push("se leyó: "+m.oido);
     if(m.conf!=null) partes.push("confianza "+m.conf);
     if(m.nota) partes.push(m.nota);
     if(t) partes.push(t[0]+" a "+t[1]+" s");
     if(partes.length) s.title = partes.join(" · ");
-    if(t) s.onclick = ()=>tocar(t[0],t[1],s);
+    if(t){ s.dataset.t0 = t[0]; s.dataset.t1 = t[1]; s.onclick = ()=>tocar(t[0],t[1],s); }
     cont.append(s, document.createTextNode(" "));
   });
   document.querySelectorAll("#sw button").forEach(b=>
     b.setAttribute("aria-pressed", String(Number(b.dataset.v)===vista)));
+  construirMapa(); limpiarSeguimiento();
+}
+
+/* Seguimiento tipo karaoke. Es lo que hace entendible el marcado: uno aprieta reproducir
+ * y ve iluminarse cada palabra en el momento en que suena, asi que puede comparar lo que
+ * oye con lo que el programa entendio, sin tener que ir palabra por palabra. */
+let mapaTiempos = [];   // [{el, t0, t1}]
+let enCurso = null;
+
+function construirMapa(){
+  mapaTiempos = [...document.querySelectorAll("#pasaje .p")]
+    .map(el => ({ el, t0: parseFloat(el.dataset.t0), t1: parseFloat(el.dataset.t1) }))
+    .filter(x => !isNaN(x.t0))
+    .sort((a,b) => a.t0 - b.t0);
+}
+
+function seguir(){
+  /* getElementById y no $: el helper $ vive dentro del modulo, y un modulo no comparte
+   * ambito con el script clasico. Referenciarlo desde aca tira "$ is not defined" en
+   * silencio adentro de un listener, que es como estuvo roto hasta que se probo. */
+  const a = document.getElementById("au");
+  if (a.paused) return;
+  const t = a.currentTime;
+  const cual = mapaTiempos.find(x => t >= x.t0 - 0.05 && t <= x.t1 + 0.05);
+  if (cual !== enCurso) {
+    if (enCurso) enCurso.el.classList.remove("siguiendo");
+    enCurso = cual || null;
+    if (enCurso) {
+      enCurso.el.classList.add("siguiendo");
+      const r = enCurso.el.getBoundingClientRect();
+      if (r.top < 60 || r.bottom > innerHeight - 40)
+        enCurso.el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }
+}
+
+function limpiarSeguimiento(){
+  if (enCurso) enCurso.el.classList.remove("siguiendo");
+  enCurso = null;
 }
 
 function tocar(t0,t1,el){
@@ -334,7 +409,7 @@ fetch("datos.json").then(r=>r.json()).then(d=>{
   window.dispatchEvent(new CustomEvent("datos-listos"));
   document.getElementById("au").src = d.audio;
   const sw = document.getElementById("sw");
-  [[VERDAD,"La verdad"],[0,"Lo que dijo Whisper"],[1,"Lo que dijo wav2vec2"]].forEach(([v,t])=>{
+  [[VERDAD,"La verdad"],[0,"Lo que oyó Whisper"],[1,"Lo que oyó wav2vec2"],[DIFERENCIA,"Dónde no coinciden"]].forEach(([v,t])=>{
     const b=document.createElement("button"); b.dataset.v=v; b.textContent=t;
     b.onclick=()=>{vista=v;pintar();}; sw.append(b);
   });
@@ -343,6 +418,13 @@ fetch("datos.json").then(r=>r.json()).then(d=>{
 
 /* Reproductor completo. Existe porque sin el, si el clic por palabra falla, no hay
  * ninguna forma de escuchar la grabacion, y entonces el marcado no se entiende. */
+(() => {
+  const a = document.getElementById("au");
+  a.addEventListener("timeupdate", seguir);
+  a.addEventListener("pause", limpiarSeguimiento);
+  a.addEventListener("ended", limpiarSeguimiento);
+})();
+
 document.getElementById("btn-play").onclick = () => {
   const a = document.getElementById("au");
   clearTimeout(a._p);
@@ -357,35 +439,28 @@ document.getElementById("btn-play").onclick = () => {
 import { cargarModelo, evaluar, Op } from "./motor.js";
 
 const $ = s => document.querySelector(s);
-let rec = null, trozos = [], t0 = 0, tick = null, listo = false;
+let rec = null, trozos = [], t0 = 0, tick = null;
+let modeloListo = null;   // promesa: se lanza al empezar a grabar
 
 function estado(t) { $("#estado-voz").textContent = t; }
 
-$("#btn-cargar").onclick = async () => {
-  $("#btn-cargar").disabled = true;
+/* El modelo pesa decenas de megas, pero grabar no lo necesita. Asi que la descarga
+ * arranca JUNTO con la grabacion y ocurre mientras la persona lee. Para cuando termina
+ * de leer, normalmente ya esta. Pedirle que descargue primero y grabe despues seria
+ * hacerle esperar dos veces por algo que puede pasar una sola. */
+function empezarDescarga() {
+  if (modeloListo) return modeloListo;
   $("#barra").classList.remove("oculto");
-  estado("Descargando el modelo, una sola vez...");
   const vistos = {};
-  try {
-    await cargarModelo(p => {
-      if (p.status === "progress" && p.file) {
-        vistos[p.file] = p.progress || 0;
-        const vals = Object.values(vistos);
-        $("#barra-in").style.width = (vals.reduce((a, b) => a + b, 0) / vals.length) + "%";
-      } else if (p.status === "ready") $("#barra-in").style.width = "100%";
-    });
-  } catch (e) {
-    estado("No se pudo cargar el modelo: " + e.message);
-    $("#btn-cargar").disabled = false;
-    return;
-  }
-  listo = true;
-  $("#barra").classList.add("oculto");
-  $("#btn-cargar").classList.add("oculto");
-  $("#btn-grabar").classList.remove("oculto");
-  $("#reloj-voz").classList.remove("oculto");
-  estado("Listo. Apretá grabar y leé el pasaje de arriba en voz alta.");
-};
+  modeloListo = cargarModelo(p => {
+    if (p.status === "progress" && p.file) {
+      vistos[p.file] = p.progress || 0;
+      const v = Object.values(vistos);
+      $("#barra-in").style.width = (v.reduce((a, b) => a + b, 0) / v.length) + "%";
+    }
+  }).then(m => { $("#barra-in").style.width = "100%"; return m; });
+  return modeloListo;
+}
 
 function reloj() {
   const s = (Date.now() - t0) / 1000;
@@ -398,6 +473,14 @@ async function arrancar() {
   let stream;
   try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
   catch (e) { estado("No se pudo abrir el micrófono: " + e.message); return; }
+
+  const yaEstaba = modeloListo !== null;
+  empezarDescarga();          // en paralelo, mientras lee
+  if (!yaEstaba) {
+    $("#btn-bajar").disabled = true;
+    $("#btn-bajar").textContent = "Descargando mientras leés";
+  }
+
   trozos = [];
   rec = new MediaRecorder(stream);
   rec.ondataavailable = ev => trozos.push(ev.data);
@@ -407,74 +490,54 @@ async function arrancar() {
   };
   rec.start(); t0 = Date.now(); tick = setInterval(reloj, 100);
   $("#btn-grabar").dataset.e = "grabando"; $("#btxt").textContent = "Detener";
-  estado("Grabando. Leé el pasaje en voz alta.");
+  estado("Grabando. Leé el pasaje de arriba en voz alta.");
   $("#res-voz").classList.add("oculto");
 }
 
 function detener() {
   if (!rec || rec.state === "inactive") return;
   clearInterval(tick); rec.stop();
-  $("#btn-grabar").dataset.e = ""; $("#btn-grabar").disabled = true; $("#btxt").textContent = "Grabar";
+  $("#btn-grabar").dataset.e = ""; $("#btn-grabar").disabled = true;
+  $("#btxt").textContent = "Grabar y puntuar";
   estado("Procesando en tu navegador...");
 }
 
 async function procesar(blob) {
-  const est = { palabras: window.FLUDATOS.estimulo.palabras, limite: 60 };
-  let r;
   const t = performance.now();
-  try { r = await evaluar(blob, est); }
-  catch (e) { estado("Error al procesar: " + e.message); $("#btn-grabar").disabled = false; return; }
+  let r;
+  try {
+    await modeloListo;        // casi siempre ya termino durante la lectura
+    $("#barra").classList.add("oculto");
+    $("#btn-bajar").textContent = "Modelo listo";
+    r = await evaluar(blob, { palabras: window.FLUDATOS.estimulo.palabras, limite: 60 });
+  } catch (e) {
+    estado("Error al procesar: " + e.message);
+    $("#btn-grabar").disabled = false;
+    return;
+  }
   const tardo = ((performance.now() - t) / 1000).toFixed(1);
   $("#btn-grabar").disabled = false;
   estado(`Listo en ${tardo} s, sin salir de tu navegador.`);
   mostrarVoz(r, tardo);
 }
 
-function mostrarVoz(r, tardo) {
-  $("#res-voz").classList.remove("oculto");
-
-  if (r.estado === "NO_EVALUABLE") {
-    $("#tres-voz").innerHTML = `<div class="n" style="grid-column:1/-1;border-top-color:var(--rojo)">
-      <div class="k">No evaluable</div>
-      <div class="g" style="font-size:26px">Sin medición</div>
-      <div class="d">${r.motivo}. <b>Esto no es un cero</b>: es la ausencia de una medición.
-      Un audio que no se pudo escuchar no puede puntuar peor que uno que sí.</div></div>`;
-    $("#pasaje-voz").innerHTML = "";
-    $("#pie-voz").textContent = `${r.duracion.toFixed(1)} s de audio, procesados en ${tardo} s.`;
-    return;
+/* Los dos caminos conviven: se puede bajar el modelo antes, o apretar grabar y que se
+ * baje mientras uno lee. El segundo es el normal; el primero sirve con conexion lenta,
+ * para no descubrir a mitad de la lectura que falta descargar. */
+$("#btn-bajar").onclick = async () => {
+  $("#btn-bajar").disabled = true;
+  $("#btn-bajar").textContent = "Descargando...";
+  try {
+    await empezarDescarga();
+    $("#btn-bajar").textContent = "Modelo listo";
+    $("#barra").classList.add("oculto");
+    estado("Modelo cargado. Ya podés grabar sin esperas.");
+  } catch (e) {
+    $("#btn-bajar").disabled = false;
+    $("#btn-bajar").textContent = "Descargar el modelo ahora";
+    estado("No se pudo cargar el modelo: " + e.message);
   }
-
-  const heredadas = r.pares.filter(p => p.nota).length;
-  $("#tres-voz").innerHTML = `
-    <div class="n v"><div class="k">Tu lectura</div>
-      <div class="g">${r.pcpm}<small> por minuto</small></div>
-      <div class="d">${r.correctas} de ${r.intentadas} palabras, en ${r.segundos} s contados.</div></div>
-    <div class="n a"><div class="k">Modelo</div>
-      <div class="g" style="font-size:22px">whisper base</div>
-      <div class="d">Corriendo en tu navegador. Más chico que el del ejemplo de arriba.</div></div>
-    <div class="n b"><div class="k">Sinalefa</div>
-      <div class="g">${heredadas}<small> palabras</small></div>
-      <div class="d">Se fundieron con la vocal anterior y heredaron su veredicto.</div></div>`;
-
-  const cont = $("#pasaje-voz"); cont.innerHTML = "";
-  for (const p of r.pares) {
-    const s = document.createElement("span");
-    if (p.op === Op.INSERCION) {
-      s.className = "p insercion"; s.textContent = "[+" + p.palabraHip + "]";
-    } else {
-      s.className = "p " + p.op + (p.nota ? " heredada" : "");
-      s.textContent = window.FLUDATOS.estimulo.palabras[p.idxRef];
-      const partes = [];
-      if (p.op === Op.SUSTITUCION) partes.push("se oyó: " + p.palabraHip);
-      if (p.nota) partes.push(p.nota);
-      if (partes.length) s.title = partes.join(" · ");
-    }
-    cont.append(s, document.createTextNode(" "));
-  }
-  $("#pie-voz").textContent =
-    `${r.duracion.toFixed(1)} s de audio, procesados en ${tardo} s dentro de tu navegador. ` +
-    `La grabación no se subió a ningún lado y no queda guardada.`;
-}
+};
 
 $("#btn-grabar").onclick = () => (rec && rec.state === "recording" ? detener() : arrancar());
 </script>
