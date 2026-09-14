@@ -86,7 +86,7 @@ tr.destacada td{background:#eef4f0}
 /* reproductor y grabacion */
 .reproductor{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:16px 0;
   padding:14px 16px;background:var(--cream);border:1px solid var(--line);border-radius:10px}
-.btn{font:600 15px var(--sans);padding:13px 22px;border-radius:999px;border:none;background:var(--ink);
+.btn{font:600 15px var(--sans);padding:13px 22px;border-radius:999px;border:none;text-decoration:none;background:var(--ink);
   color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:9px}
 .btn:hover{filter:brightness(1.25)}
 .btn:disabled{background:#bdbdbd;cursor:not-allowed;filter:none}
@@ -104,6 +104,27 @@ tr.destacada td{background:#eef4f0}
 .barra{height:5px;background:var(--line);border-radius:3px;margin-top:14px;overflow:hidden}
 #barra-in{height:100%;width:0;background:var(--teal);transition:width .2s}
 audio{max-width:100%}
+
+/* los tres pasos del asistente */
+.pasos3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}
+@media(max-width:700px){.pasos3{grid-template-columns:1fr}}
+.pasos3>div{background:var(--cream2);border:1px solid var(--line);border-radius:12px;padding:18px 18px 20px;
+  position:relative}
+.pasos3 .n{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;
+  align-items:center;justify-content:center;font:700 12px var(--sans);margin-bottom:10px}
+.pasos3 h4{font:600 15.5px var(--sans);color:var(--ink2);margin-bottom:6px;letter-spacing:-.01em}
+.pasos3 p{font-size:13.5px;line-height:1.5;color:#5b6570;margin:0}
+.pasos3 p b{color:var(--ink2)}
+
+/* la grilla del evaluador, tal cual la dibuja el asistente */
+.mini{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;font:16px/1.3 var(--sans);text-align:center;
+  max-width:440px}
+.mini span{padding:7px 2px;border-radius:6px;background:var(--verde-f);color:var(--verde);
+  border:1.5px solid transparent}
+.mini span.mal{background:var(--rojo-f);color:var(--rojo);text-decoration:line-through;
+  text-decoration-thickness:2px}
+.mini span.tocada{border-color:var(--ink)}
+.mini span.corte{border-bottom:2px solid var(--ink);border-radius:6px 6px 0 0}
 </style>
 </head>
 <body>
@@ -279,6 +300,59 @@ audio{max-width:100%}
   <p class="fuente"><b>El modelo que corre acá es más chico</b> que el de escritorio, porque tiene que caber en
   una descarga razonable, y corre uno solo en vez de dos. Su puntaje <b>no se compara</b> con los del ejemplo:
   son modelos distintos sobre grabaciones distintas.</p>
+</section>
+
+<!-- ============ 4b. EL ASISTENTE ============ -->
+<section>
+  <h3>La versi&oacute;n para el aula</h3>
+  <h2>El asistente del evaluador, en tres pasos</h2>
+  <p>Lo de arriba es el banco de pruebas. <b>Esto es lo que un evaluador usar&iacute;a ma&ntilde;ana</b>, y no
+  necesita que el modelo sea bueno: necesita que sea &uacute;til. La m&aacute;quina entrega <b>un borrador
+  marcado</b> y la persona corrige lo que est&aacute; mal con un toque. <b>El puntaje que vale es siempre el del
+  humano.</b></p>
+
+  <div class="pasos3">
+    <div>
+      <span class="n">1</span>
+      <h4>Qui&eacute;n y qu&eacute; prueba</h4>
+      <p>Un <b>c&oacute;digo an&oacute;nimo</b>, sin nombres, y una de las <b>cinco subtareas</b>: sonidos de
+      letras, s&iacute;labas, palabras, palabras sin sentido o el pasaje.</p>
+    </div>
+    <div>
+      <span class="n">2</span>
+      <h4>Que lea en voz alta</h4>
+      <p>Aparece la <b>consigna</b> y la <b>grilla del evaluador</b>, igual que en la hoja de papel. Se toca
+      grabar, y el reconocedor se descarga mientras el chico lee.</p>
+    </div>
+    <div>
+      <span class="n">3</span>
+      <h4>Corregir el borrador</h4>
+      <p>El pasaje vuelve <b>ya marcado</b>. Cada toque cambia una palabra de bien a mal, y el puntaje se
+      recalcula solo. <b>Cada correcci&oacute;n queda guardada.</b></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="fuente" style="margin:0 0 12px">As&iacute; se ve el paso 3 en una subtarea de palabras. Lo rojo es
+    lo que la m&aacute;quina dio por mal le&iacute;do; el recuadro oscuro es lo que el evaluador ya
+    corrigi&oacute;.</p>
+    <div class="mini">
+      <span>perro</span><span>mano</span><span class="mal">maestra</span><span>plaza</span><span>r&iacute;o</span>
+      <span class="corte">chompa</span><span class="mal tocada corte">pelota</span><span class="corte">leche</span><span class="mal corte">campo</span><span class="corte">agua</span>
+      <span>cancha</span><span>cielo</span><span class="mal">vecino</span><span>pueblo</span><span>ventana</span>
+    </div>
+    <p class="fuente" style="margin-top:12px">La l&iacute;nea marca el final de los <b>diez primeros &iacute;tems</b>. Si no hay ning&uacute;n acierto ah&iacute;, el protocolo manda <b>descontinuar</b> la
+    prueba, y eso s&iacute; es un cero: se escuch&oacute; al chico intentar. Es lo contrario de un audio que no
+    se pudo evaluar.</p>
+  </div>
+
+  <p style="margin-top:18px"><a class="btn" href="asistente.html">Abrir el asistente</a></p>
+  <p class="fuente">Se <b>instala como app</b> desde el navegador, sin tienda de aplicaciones, y
+  <b>funciona sin se&ntilde;al</b> despu&eacute;s de la primera vez. Todo queda en el tel&eacute;fono: se exporta
+  a CSV cuando hace falta, y nada se sube a ning&uacute;n servidor.</p>
+  <p class="fuente"><b>Y lo que hace que esto valga la pena aunque el modelo todav&iacute;a no sirva:</b> cada
+  correcci&oacute;n del evaluador es una etiqueta de entrenamiento, con el audio al lado. La herramienta que
+  recoge los datos es la misma que despu&eacute;s reemplaza el conteo manual.</p>
 </section>
 
 <!-- ============ 5. LA OTRA VARA ============ -->
