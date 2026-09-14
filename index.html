@@ -143,12 +143,21 @@ audio{max-width:100%}
 <section>
   <div class="card">
     <h3>El pasaje</h3>
+    <div class="reproductor">
+      <button class="btn" id="btn-play">&#9654;&nbsp; Escuchar la lectura</button>
+      <audio id="au" controls preload="auto" style="flex:1;min-width:240px;height:38px"></audio>
+      <span style="font-size:12.5px;color:var(--muted);flex-basis:100%">
+        Mientras suena, cada palabra se ilumina en el momento en que se lee.</span>
+    </div>
+    <p style="margin:18px 0 10px;font-size:14px;color:var(--muted)">
+      <b style="color:var(--ink2)">A los dos programas se les dio la misma grabación y el mismo texto.</b>
+      Cada pestaña muestra qué entendió cada uno, y la última, dónde no coincidieron.</p>
     <div class="sw" id="sw"></div>
     <div id="pasaje"></div>
     <div class="leyenda oculto" id="leyenda-dif">
       <span class="p discrepa">acá los dos programas no coinciden</span>
       <span class="p coincide">acá coinciden</span>
-      <span style="margin-left:auto">Misma grabación, distinto veredicto. Pasá el cursor para ver qué dijo cada uno.</span>
+      <span style="margin-left:auto;font-size:11.5px">Misma grabación, distinto veredicto. Pasá el cursor sobre una palabra para ver qué dijo cada uno.</span>
     </div>
     <div class="leyenda" id="leyenda-normal">
       <span class="p acierto">leída</span>
@@ -156,14 +165,11 @@ audio{max-width:100%}
       <span class="p truncada">leída a medias</span>
       <span class="p omision">omitida</span>
       <span class="p insercion">insertada</span>
-      <span style="margin-left:auto"><b>Hacé clic en cualquier palabra para escucharla.</b></span>
+      <span style="margin-left:auto;font-size:11.5px">También podés hacer clic en una palabra suelta para oír solo ese instante.</span>
     </div>
     <div class="pie" id="proc"></div>
   </div>
-  <div class="reproductor">
-    <button class="btn" id="btn-play">&#9654;&nbsp; Escuchar la lectura completa</button>
-    <audio id="au" controls preload="auto" style="flex:1;min-width:240px;height:38px"></audio>
-  </div>
+
 </section>
 
 <section>
@@ -409,7 +415,7 @@ fetch("datos.json").then(r=>r.json()).then(d=>{
   window.dispatchEvent(new CustomEvent("datos-listos"));
   document.getElementById("au").src = d.audio;
   const sw = document.getElementById("sw");
-  [[VERDAD,"La verdad"],[0,"Lo que oyó Whisper"],[1,"Lo que oyó wav2vec2"],[DIFERENCIA,"Dónde no coinciden"]].forEach(([v,t])=>{
+  [[VERDAD,"La verdad"],[0,"Lo que entendió Whisper"],[1,"Lo que entendió wav2vec2"],[DIFERENCIA,"Dónde no coinciden"]].forEach(([v,t])=>{
     const b=document.createElement("button"); b.dataset.v=v; b.textContent=t;
     b.onclick=()=>{vista=v;pintar();}; sw.append(b);
   });
