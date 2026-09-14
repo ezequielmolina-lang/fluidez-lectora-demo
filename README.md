@@ -76,6 +76,17 @@ forzada), los experimentos, los estímulos generados y la documentación del mé
 repositorio aparte todavía sin publicar. Se publica junto con la primera medición contra un
 panel de evaluadores humanos, para que el código y el resultado salgan juntos.
 
+## Licencia
+
+El código de este repositorio está bajo **[licencia MIT](LICENSE)**: se puede usar, copiar,
+modificar y distribuir, también comercialmente, con solo conservar el aviso de copyright. Los
+estímulos de `estimulos.json` van bajo la misma licencia, con la advertencia de que **no están
+validados**.
+
+Queda aparte lo que no es software: las especificaciones de subtareas, tiempos y reglas de
+corte derivan del EGRA Toolkit bajo Creative Commons Attribution 4.0, y esa atribución se
+mantiene. El detalle está en el archivo [LICENSE](LICENSE).
+
 ## Atribución y modelos
 
 Las especificaciones de subtareas, tiempos y reglas de corte son una adaptación de un trabajo

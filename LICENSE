@@ -1,0 +1,37 @@
+MIT License
+
+Copyright (c) 2026 Ezequiel Molina
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Nota sobre el contenido, que no es software y tiene otros términos:
+
+- Las especificaciones de subtareas, tiempos y reglas de corte son una adaptación de
+  "Early Grade Reading Assessment (EGRA) Toolkit, Second Edition" (RTI International
+  para USAID, 2016), publicado bajo Creative Commons Attribution 4.0 International.
+  La atribución se mantiene en el pie de la página y en el README.
+
+- Los estímulos de `estimulos.json` son de elaboración propia y se distribuyen bajo esta
+  misma licencia MIT. NO están validados: requieren revisión de un especialista en lengua
+  antes de cualquier uso en campo.
+
+- Los modelos de voz no se distribuyen acá y tienen sus propias licencias: Whisper (MIT)
+  y jonatasgrosman/wav2vec2-large-xlsr-53-spanish (Apache 2.0).
