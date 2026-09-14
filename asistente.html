@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asistente de fluidez lectora</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#13303a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icono.svg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#13303a; --ink2:#16242f; --teal:#1a4a57; --gold:#c89a3c;
+  --verde:#186b43; --verde-f:#e4f2ea; --rojo:#a51f18; --rojo-f:#fbe9e8;
+  --cream:#f1efe9; --cream2:#fff; --line:#e2dcce; --body:#3a444d; --muted:#7c8590;
+  --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--cream);color:var(--body);font:16px/1.5 var(--sans);
+  padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 40px}
+
+header{background:var(--ink);color:#fff;padding:18px 0;margin-bottom:18px;
+  padding-top:calc(18px + env(safe-area-inset-top))}
+header .wrap{display:flex;align-items:center;gap:12px}
+header h1{font-size:17px;font-weight:600;letter-spacing:-.01em}
+header .est{margin-left:auto;font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold)}
+
+.paso{background:var(--cream2);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.paso.oculto{display:none}
+.num{font:700 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+  display:block;margin-bottom:8px}
+h2{font-size:19px;font-weight:600;color:var(--ink2);letter-spacing:-.01em;margin-bottom:10px}
+label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+input,select{font:500 17px var(--sans);width:100%;padding:13px 14px;border:1px solid var(--line);
+  border-radius:10px;background:var(--cream2);color:var(--ink2);margin-bottom:12px}
+input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
+
+.btn{font:600 17px var(--sans);width:100%;padding:17px;border-radius:12px;border:none;
+  background:var(--ink);color:#fff;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:10px}
+.btn:disabled{background:#c3c3c3}
+.btn.rojo{background:var(--rojo)}
+.btn.claro{background:transparent;color:var(--teal);border:1.5px solid var(--line)}
+.btn.chico{font-size:15px;padding:12px}
+.fila{display:flex;gap:10px}
+.pt{width:11px;height:11px;border-radius:50%;background:#fff}
+.btn.rojo .pt{animation:late 1s infinite}
+@keyframes late{0%,100%{opacity:1}50%{opacity:.2}}
+
+.reloj{font:700 52px var(--mono);letter-spacing:-.04em;color:var(--ink2);text-align:center;margin:10px 0 4px}
+.reloj.pasado{color:var(--rojo)}
+.reloj small{font:400 14px var(--sans);color:var(--muted)}
+.aviso{font-size:13.5px;color:var(--muted);text-align:center;margin-bottom:12px}
+.barra{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:12px}
+#barra-in{height:100%;width:0;background:var(--teal);transition:width .25s}
+
+/* el pasaje, tocable */
+.pasaje{font:21px/2.05 var(--sans);margin:4px 0 14px}
+.w{padding:3px 5px;border-radius:6px;cursor:pointer;display:inline-block;
+   background:var(--verde-f);color:var(--verde);border:1.5px solid transparent}
+.w.mal{background:var(--rojo-f);color:var(--rojo);text-decoration:line-through;
+   text-decoration-thickness:2px}
+.w.tocada{border-color:var(--ink)}
+.w:active{transform:scale(.94)}
+
+.marcador{display:flex;gap:10px;margin:14px 0}
+.mk{flex:1;background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.mk b{display:block;font:700 27px var(--sans);color:var(--ink2);letter-spacing:-.02em}
+.mk span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+.mk.g b{color:var(--verde)}
+
+.nota{background:#fff8e6;border:1px solid #f0dfae;border-radius:10px;padding:12px 14px;
+  font-size:13px;color:#5b4406;line-height:1.5;margin-top:12px}
+.noeval{background:var(--rojo-f);border:1px solid #f0c8c5;border-radius:10px;padding:14px;
+  font-size:14px;color:#7a2a25;line-height:1.5}
+.noeval b{color:var(--rojo)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+td{padding:10px 8px 10px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n{font:700 14px var(--mono);color:var(--ink2);white-space:nowrap}
+.vacio{font-size:13.5px;color:var(--muted);padding:6px 0}
+.pie{font-size:12px;color:var(--muted);line-height:1.5;margin-top:16px}
+a{color:var(--teal)}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>Asistente de fluidez lectora</h1>
+  <span class="est" id="est-cabecera"></span>
+</div></header>
+
+<div class="wrap">
+
+  <!-- 1. quien y que -->
+  <div class="paso" id="paso1">
+    <span class="num">Paso 1</span>
+    <h2>¿A quién y qué se le toma?</h2>
+    <label for="codigo">Código del estudiante (sin nombres)</label>
+    <input id="codigo" inputmode="text" autocomplete="off" placeholder="ej. 2B-014">
+    <label for="sel">Prueba</label>
+    <select id="sel"></select>
+    <button class="btn" id="btn-empezar">Continuar</button>
+    <div class="nota"><b>No escribas nombres.</b> El código sirve para volver a encontrar la grabación sin
+    identificar a nadie. Todo queda en este teléfono.</div>
+  </div>
+
+  <!-- 2. grabar -->
+  <div class="paso oculto" id="paso2">
+    <span class="num">Paso 2</span>
+    <h2 id="titulo-prueba">Que el estudiante lea en voz alta</h2>
+    <div class="pasaje" id="pasaje-lectura"></div>
+    <div class="reloj" id="reloj">0<small> s</small></div>
+    <div class="aviso" id="aviso-grabar">Tocá grabar cuando el estudiante esté listo.</div>
+    <button class="btn" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar</span></button>
+    <div class="barra oculto" id="barra"><div id="barra-in"></div></div>
+    <div class="nota oculto" id="nota-descarga">Preparando el reconocedor. Se descarga una sola vez y después
+    funciona sin señal.</div>
+  </div>
+
+  <!-- 3. revisar -->
+  <div class="paso oculto" id="paso3">
+    <span class="num">Paso 3</span>
+    <h2>Corregí lo que la máquina marcó mal</h2>
+    <div class="aviso" style="text-align:left">Tocá cualquier palabra para cambiar su estado. El puntaje se
+    recalcula solo. <b>El puntaje que vale es el tuyo.</b></div>
+    <div id="alerta-noeval"></div>
+    <div class="pasaje" id="pasaje-revisar"></div>
+    <div class="marcador">
+      <div class="mk g"><b id="m-pcpm">—</b><span>palabras/min</span></div>
+      <div class="mk"><b id="m-correctas">—</b><span>correctas</span></div>
+      <div class="mk"><b id="m-cambios">0</b><span>correcciones</span></div>
+    </div>
+    <div class="fila">
+      <button class="btn claro chico" id="btn-descartar">Descartar</button>
+      <button class="btn chico" id="btn-guardar">Guardar y siguiente</button>
+    </div>
+    <div class="pie" id="pie-revisar"></div>
+  </div>
+
+  <!-- registros -->
+  <div class="paso">
+    <span class="num">Guardados en este teléfono</span>
+    <h2 id="titulo-registros">Todavía no hay ninguno</h2>
+    <div id="tabla-registros"><div class="vacio">Las aplicaciones que guardes aparecen acá.</div></div>
+    <div class="fila" style="margin-top:14px">
+      <button class="btn claro chico" id="btn-csv">Exportar CSV</button>
+      <button class="btn claro chico" id="btn-json">Exportar todo</button>
+    </div>
+    <div class="pie">El audio y los datos quedan <b>solo en este teléfono</b>. Nada se sube a ningún servidor.
+    Exportá antes de borrar el navegador o cambiar de equipo.</div>
+  </div>
+
+  <p class="pie">Cada corrección que hacés queda registrada junto a lo que había dicho la máquina. Eso es lo
+  que permite medir después cuánto se equivoca, y mejorarla. &middot;
+  <a href="./">Qué es esto y de dónde salen los números</a></p>
+</div>
+
+<script type="module">
+import { cargarModelo, evaluar, Op } from "./motor.js";
+
+const $ = s => document.querySelector(s);
+const CLAVE = "fluidez.registros.v1";
+
+let estimulos = [], actual = null, rec = null, trozos = [], t0 = 0, tick = null;
+let modeloListo = null, resultado = null, marcas = [], marcasMaquina = [], audioBlob = null;
+
+/* ---------------- estimulos ---------------- */
+const NOMBRE = { letras:"Sonidos de letras", silabas:"Sílabas", palabras:"Palabras",
+                 pseudopalabras:"Palabras sin sentido", pasaje:"Lectura de un pasaje" };
+
+async function cargarEstimulos(){
+  const d = await (await fetch("datos.json")).json();
+  /* Por ahora el asistente trae el pasaje del banco de pruebas. Agregar los demas es
+     agregar archivos de estimulo, no tocar codigo. */
+  estimulos = [{ id: d.estimulo.id, tarea: "pasaje", limite: 60, palabras: d.estimulo.palabras }];
+  const sel = $("#sel");
+  estimulos.forEach(e => {
+    const o = document.createElement("option");
+    o.value = e.id; o.textContent = NOMBRE[e.tarea] + " · " + e.palabras.length + " palabras";
+    sel.append(o);
+  });
+}
+
+/* ---------------- paso 1 ---------------- */
+$("#btn-empezar").onclick = () => {
+  const cod = $("#codigo").value.trim();
+  if (!cod) { $("#codigo").focus(); return; }
+  actual = estimulos.find(e => e.id === $("#sel").value);
+  $("#est-cabecera").textContent = cod;
+  $("#titulo-prueba").textContent = NOMBRE[actual.tarea];
+  pintarLectura();
+  $("#paso1").classList.add("oculto");
+  $("#paso2").classList.remove("oculto");
+  empezarDescarga();
+};
+
+function pintarLectura(){
+  const c = $("#pasaje-lectura"); c.innerHTML = "";
+  actual.palabras.forEach(w => {
+    const s = document.createElement("span");
+    s.className = "w"; s.style.background = "transparent"; s.style.color = "var(--ink2)";
+    s.style.cursor = "default"; s.textContent = w;
+    c.append(s, document.createTextNode(" "));
+  });
+}
+
+/* ---------------- descarga del modelo, en paralelo ---------------- */
+function empezarDescarga(){
+  if (modeloListo) return modeloListo;
+  $("#barra").classList.remove("oculto");
+  $("#nota-descarga").classList.remove("oculto");
+  const vistos = {};
+  modeloListo = cargarModelo(p => {
+    if (p.status === "progress" && p.file) {
+      vistos[p.file] = p.progress || 0;
+      const v = Object.values(vistos);
+      $("#barra-in").style.width = (v.reduce((a,b)=>a+b,0) / v.length) + "%";
+    }
+  }).then(m => {
+    $("#barra").classList.add("oculto");
+    $("#nota-descarga").classList.add("oculto");
+    return m;
+  });
+  return modeloListo;
+}
+
+/* ---------------- paso 2: grabar ---------------- */
+function reloj(){
+  const s = (Date.now() - t0) / 1000;
+  $("#reloj").innerHTML = s.toFixed(0) + "<small> s</small>";
+  $("#reloj").classList.toggle("pasado", s > actual.limite);
+  if (s > actual.limite + 10) detener();
+}
+
+/* Modo demostracion: ?demo=1 usa la grabacion de ejemplo en vez del microfono. Sirve para
+ * mostrar el flujo entero sin grabar a nadie, y para probar la app sin microfono. */
+const DEMO = new URLSearchParams(location.search).get("demo") === "1";
+if (DEMO) $("#aviso-grabar").textContent = "Modo demostración: usa una grabación de ejemplo.";
+
+$("#btn-grabar").onclick = async () => {
+  if (DEMO) {
+    $("#btn-grabar").disabled = true;
+    $("#aviso-grabar").textContent = "Escuchando la grabación de ejemplo...";
+    empezarDescarga();
+    audioBlob = await (await fetch("lectura.mp3")).blob();
+    await procesar();
+    return;
+  }
+  (rec && rec.state === "recording") ? detener() : grabar();
+};
+
+async function grabar(){
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { $("#aviso-grabar").textContent = "No se pudo abrir el micrófono: " + e.message; return; }
+  empezarDescarga();
+  trozos = [];
+  rec = new MediaRecorder(stream);
+  rec.ondataavailable = ev => trozos.push(ev.data);
+  rec.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    audioBlob = new Blob(trozos, { type: "audio/webm" });
+    await procesar();
+  };
+  rec.start(); t0 = Date.now(); tick = setInterval(reloj, 100);
+  $("#btn-grabar").classList.add("rojo"); $("#btxt").textContent = "Detener";
+  $("#aviso-grabar").textContent = "Grabando. Tocá detener cuando termine de leer.";
+}
+
+function detener(){
+  if (!rec || rec.state === "inactive") return;
+  clearInterval(tick); rec.stop();
+  $("#btn-grabar").classList.remove("rojo"); $("#btn-grabar").disabled = true;
+  $("#btxt").textContent = "Grabar";
+  $("#aviso-grabar").textContent = "Escuchando la grabación...";
+}
+
+async function procesar(){
+  try {
+    await modeloListo;
+    resultado = await evaluar(audioBlob, { palabras: actual.palabras, limite: actual.limite });
+  } catch (e) {
+    $("#aviso-grabar").textContent = "Error al procesar: " + e.message;
+    $("#btn-grabar").disabled = false; return;
+  }
+  $("#btn-grabar").disabled = false;
+  /* El borrador de la maquina: true = la dio por bien leida */
+  marcasMaquina = actual.palabras.map((_, i) => {
+    const p = resultado.pares.find(x => x.idxRef === i);
+    return p ? p.op === Op.ACIERTO : false;
+  });
+  marcas = marcasMaquina.slice();
+  $("#paso2").classList.add("oculto");
+  $("#paso3").classList.remove("oculto");
+  pintarRevision();
+  scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------------- paso 3: revisar y corregir ---------------- */
+function pintarRevision(){
+  const c = $("#pasaje-revisar"); c.innerHTML = "";
+  actual.palabras.forEach((w, i) => {
+    const s = document.createElement("span");
+    s.className = "w" + (marcas[i] ? "" : " mal") + (marcas[i] !== marcasMaquina[i] ? " tocada" : "");
+    s.textContent = w;
+    s.onclick = () => { marcas[i] = !marcas[i]; pintarRevision(); };
+    c.append(s, document.createTextNode(" "));
+  });
+
+  const noEval = resultado.estado === "NO_EVALUABLE";
+  $("#alerta-noeval").innerHTML = noEval
+    ? `<div class="noeval"><b>La máquina no pudo evaluar este audio</b>: ${resultado.motivo}.
+       Eso <b>no es un cero</b>. Marcá vos las palabras o volvé a grabar.</div>`
+    : "";
+
+  const correctas = marcas.filter(Boolean).length;
+  const seg = Math.max(resultado.segundos || 0, 1);
+  $("#m-pcpm").textContent = Math.round(correctas * 60 / seg);
+  $("#m-correctas").textContent = correctas + "/" + actual.palabras.length;
+  $("#m-cambios").textContent = marcas.filter((m, i) => m !== marcasMaquina[i]).length;
+  $("#pie-revisar").textContent =
+    `${resultado.duracion.toFixed(1)} s de audio · ${seg.toFixed(1)} s contados · ` +
+    `la máquina había marcado ${marcasMaquina.filter(Boolean).length} correctas`;
+}
+
+$("#btn-descartar").onclick = () => volverAlInicio();
+
+$("#btn-guardar").onclick = () => {
+  const correctas = marcas.filter(Boolean).length;
+  const seg = Math.max(resultado.segundos || 0, 1);
+  const reg = {
+    id: Date.now(),
+    codigo: $("#est-cabecera").textContent,
+    estimulo: actual.id,
+    fecha: new Date().toISOString(),
+    duracion: +resultado.duracion.toFixed(1),
+    segundos: +seg.toFixed(2),
+    pcpm_humano: Math.round(correctas * 60 / seg),
+    correctas_humano: correctas,
+    pcpm_maquina: resultado.pcpm,
+    correctas_maquina: marcasMaquina.filter(Boolean).length,
+    estado_maquina: resultado.estado,
+    correcciones: marcas.filter((m, i) => m !== marcasMaquina[i]).length,
+    /* lo que vale para entrenar: el veredicto de cada uno, palabra por palabra */
+    humano: marcas.map(m => m ? 1 : 0).join(""),
+    maquina: marcasMaquina.map(m => m ? 1 : 0).join(""),
+  };
+  const todos = leer();
+  todos.unshift(reg);
+  localStorage.setItem(CLAVE, JSON.stringify(todos));
+  pintarRegistros();
+  volverAlInicio();
+};
+
+function volverAlInicio(){
+  resultado = null; audioBlob = null; marcas = []; marcasMaquina = [];
+  $("#paso3").classList.add("oculto");
+  $("#paso2").classList.add("oculto");
+  $("#paso1").classList.remove("oculto");
+  $("#codigo").value = ""; $("#codigo").focus();
+  $("#est-cabecera").textContent = "";
+  $("#reloj").innerHTML = "0<small> s</small>";
+  $("#aviso-grabar").textContent = "Tocá grabar cuando el estudiante esté listo.";
+  scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------------- registros ---------------- */
+const leer = () => { try { return JSON.parse(localStorage.getItem(CLAVE)) || []; } catch { return []; } };
+
+function pintarRegistros(){
+  const todos = leer();
+  $("#titulo-registros").textContent = todos.length
+    ? todos.length + (todos.length === 1 ? " aplicación guardada" : " aplicaciones guardadas")
+    : "Todavía no hay ninguno";
+  if (!todos.length) {
+    $("#tabla-registros").innerHTML = '<div class="vacio">Las aplicaciones que guardes aparecen acá.</div>';
+    return;
+  }
+  $("#tabla-registros").innerHTML = "<table>" + todos.slice(0, 12).map(r => `
+    <tr><td><b>${r.codigo}</b><br><span style="font-size:11.5px;color:var(--muted)">
+      ${new Date(r.fecha).toLocaleString("es")}</span></td>
+      <td class="n">${r.pcpm_humano} ppm</td>
+      <td style="font-size:12px;color:var(--muted)">${r.correcciones} corr.</td></tr>`).join("") + "</table>";
+}
+
+function bajar(nombre, texto, tipo){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([texto], { type: tipo }));
+  a.download = nombre; a.click(); URL.revokeObjectURL(a.href);
+}
+
+$("#btn-csv").onclick = () => {
+  const todos = leer();
+  if (!todos.length) return;
+  const cols = ["codigo","estimulo","fecha","duracion","segundos","pcpm_humano","correctas_humano",
+                "pcpm_maquina","correctas_maquina","estado_maquina","correcciones"];
+  const csv = [cols.join(",")].concat(
+    todos.map(r => cols.map(c => JSON.stringify(r[c] ?? "")).join(","))).join("\n");
+  bajar("fluidez.csv", csv, "text/csv");
+};
+
+$("#btn-json").onclick = () => {
+  const todos = leer();
+  if (!todos.length) return;
+  bajar("fluidez.json", JSON.stringify(todos, null, 1), "application/json");
+};
+
+/* ---------------- arranque ---------------- */
+await cargarEstimulos();
+pintarRegistros();
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(r => console.info("[asistente] sin conexión listo:", r.scope))
+    .catch(e => console.warn("[asistente] sin modo offline:", e.message));
+}
+</script>
+</body>
+</html>
