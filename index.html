@@ -365,30 +365,21 @@ audio{max-width:100%}
 
 <!-- ============ 6. PRINCIPIOS Y LO QUE FALTA ============ -->
 <section>
-  <h3>Un principio de diseño</h3>
-  <h2>Un audio que no se pudo evaluar no es un cero</h2>
-  <p>Si la grabación sale muda, con demasiado ruido o demasiado corta, el sistema responde <b>«no evaluable»,
-  con el motivo, y nunca un cero</b>. Un cero es una afirmación sobre un niño, y no se puede afirmar lo que no
-  se escuchó. Sin esta regla el sistema mide la calidad del micrófono y la llama fluidez, y un chico mal
-  grabado puntúa peor que uno bien grabado.</p>
+  <h3>Dos reglas</h3>
+  <h2>Lo que el sistema nunca hace, y lo que falta verificar</h2>
+  <table>
+    <tr><td style="width:36%"><b>Un audio que no se pudo evaluar<br>no es un cero</b></td>
+      <td>Si sale mudo, con ruido o muy corto, responde <b>«no evaluable» con el motivo</b>. Si no, mediría la
+      calidad del micrófono y la llamaría fluidez.</td></tr>
+    <tr><td><b>El riesgo más serio,<br>sin verificar</b></td>
+      <td>Si penaliza el <b>intercambio de vocales e/i y o/u</b> de hablantes de quechua y aimara, estaría
+      midiendo lengua materna y llamándolo fluidez. Se verifica antes que nada.</td></tr>
+  </table>
+  <p class="fuente" style="margin-top:14px">Por qué hace falta grabar niños y no alcanza con imaginar los
+  errores: en la primera grabación humana apareció que la palabra <b>«a»</b> tras otra terminada en «a», como
+  en «camina a la escuela», <b>desaparece del audio</b> porque las vocales se funden al hablar. El programa la
+  daba por no leída. No es un error del lector, es español bien hablado, y nadie lo habría previsto.</p>
 </section>
-
-<section>
-  <h3>Lo que falta</h3>
-  <h2>Voces de niños peruanos</h2>
-  <p>Un detalle encontrado el primer día, con la primera grabación humana que procesó el sistema: la palabra
-  <b>«a»</b> después de una palabra terminada en «a», como en «camina a la escuela», <b>desaparece</b>. Las dos
-  vocales se funden al hablar, hay una sola en el audio, y el programa la marcaba como no leída. No es un error
-  del lector: es español bien hablado, y rompía la medición.</p>
-  <p>Nadie lo habría puesto en una lista de errores previsibles, porque no es un error. Eso es exactamente lo
-  que hace falta buscar con grabaciones reales, en el aula real y a la edad real. Y hay uno más importante por
-  verificar: si el sistema penaliza el <b>intercambio de vocales e/i y o/u</b> propio de hablantes de quechua y
-  aimara, estaría midiendo lengua materna y llamándolo fluidez.</p>
-  <p>Los modelos son de pesos abiertos, con licencias MIT y Apache 2.0, y corren en la propia computadora:
-  <b>no hay costo por uso ni el audio sale a ningún servicio</b>. Del orden de 460 horas de procesador por cada
-  100.000 estudiantes, en una computadora común y sin placa de video.</p>
-</section>
-
 
 <section>
   <h3>Fuentes</h3>
