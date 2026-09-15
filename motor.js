@@ -159,6 +159,44 @@ export function puntuar(pares, tiempos, duracion, limite = 60) {
  * y la concatenacion no coincide, asi que tambien sigue mal. */
 const MAXIMO_EN_JUNTURA = 4;
 
+/* FORMA CANONICA POR SONIDO, no por letra: «casa», «kasa» y «caza» dan lo mismo.
+ *
+ * POR QUE EXISTE, y el caso es real: al leer «Ca-da» con una pausa en el medio, el
+ * reconocedor escribe «ka da». El chico leyo bien; lo que cambio es como se escribe lo que
+ * se oyo. La silaba suelta se transcribe foneticamente porque no hay palabra que la ancle, y
+ * en espaniol el mismo sonido se escribe de varias formas: /ka/ es «ca» o «ka», /s/ es «s»,
+ * «c» o «z», /b/ es «b» o «v», y la hache no suena.
+ *
+ * SOLO se usa para juntar un tramo partido en varios pedazos, NUNCA para comparar una
+ * palabra contra otra: esta funcion afloja, y lo que afloja hay que tenerlo acotado. */
+export function claveFonetica(palabra) {
+  let p = palabra.toLowerCase()
+    .replace(/ch/g, "C").replace(/ll/g, "Y").replace(/rr/g, "r")
+    .replace(/qu/g, "k").replace(/gu/g, "G");
+
+  let salida = "";
+  for (let i = 0; i < p.length; i++) {
+    const c = p[i];
+    const palatal = i + 1 < p.length && "ei".includes(p[i + 1]);
+    if (c === "c") salida += palatal ? "s" : "k";
+    else if (c === "q" || c === "k") salida += "k";
+    else if (c === "z") salida += "s";
+    else if (c === "v") salida += "b";
+    else if (c === "g") salida += palatal ? "j" : "g";
+    else if (c === "h") continue;              // la hache no suena
+    else if (c === "G") salida += "g";
+    else if (c === "Y") salida += "y";         // yeismo
+    else if (c === "C") salida += "ch";
+    else salida += c;
+  }
+  // Letras dobles seguidas suenan una sola vez. Con un bucle y no con una retrorreferencia
+  // en el regex: una barra invertida escrita por un generador ya se colo una vez en este
+  // archivo como caracter de control.
+  let junta = "";
+  for (const c of salida) if (c !== junta[junta.length - 1]) junta += c;
+  return junta;
+}
+
 function repararResegmentacion(pares) {
   let i = 0;
   while (i < pares.length) {
@@ -168,9 +206,11 @@ function repararResegmentacion(pares) {
     const tramo = pares.slice(i, j);
     const refs = tramo.filter(p => p.idxRef !== null).map(p => p.palabraRef);
     const hips = tramo.filter(p => p.idxHip !== null).map(p => p.palabraHip);
+    const mismasLetras = refs.join("") === hips.join("");
+    const mismosSonidos = claveFonetica(refs.join("")) === claveFonetica(hips.join(""));
     if (refs.length && hips.length && (refs.length > 1 || hips.length > 1)
         && refs.length <= MAXIMO_EN_JUNTURA && hips.length <= MAXIMO_EN_JUNTURA
-        && refs.join("") === hips.join("")) {
+        && (mismasLetras || mismosSonidos)) {
       for (const p of tramo) if (p.idxRef !== null) {
         p.op = Op.ACIERTO;
         p.nota = "juntura: mismas letras, otra division de palabras";
