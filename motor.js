@@ -144,6 +144,49 @@ export function puntuar(pares, tiempos, duracion, limite = 60) {
            correctas, intentadas: nRef, segundos: Math.round(segundos * 100) / 100, motivo: null, pares };
 }
 
+/* LOS BORDES DE PALABRA, que es donde el conteo se rompe en espaniol.
+ *
+ * Los dos casos aparecieron MIDIENDO, no pensando, y son el mismo problema de fondo:
+ *
+ *   - Sinalefa: «camina a la escuela» se pronuncia «caminala escuela» y la «a» desaparece.
+ *   - Resegmentacion: «leer es» se reconoce «le eres». Misma onda, otra division.
+ *
+ * La frontera entre palabras no esta en el aire: esta en la ortografia. Quien lee bien
+ * «leer es» produce exactamente la misma onda que quien dijera «le eres».
+ *
+ * LA LINEA QUE NO SE CRUZA: esto repara bordes, no perdona errores. «cada» leido «caba»
+ * tiene otras letras y sigue mal; «sol» leido «los» tiene las mismas letras en otro orden
+ * y la concatenacion no coincide, asi que tambien sigue mal. */
+const MAXIMO_EN_JUNTURA = 4;
+
+function repararResegmentacion(pares) {
+  let i = 0;
+  while (i < pares.length) {
+    if (pares[i].op === Op.ACIERTO) { i++; continue; }
+    let j = i;
+    while (j < pares.length && pares[j].op !== Op.ACIERTO) j++;
+    const tramo = pares.slice(i, j);
+    const refs = tramo.filter(p => p.idxRef !== null).map(p => p.palabraRef);
+    const hips = tramo.filter(p => p.idxHip !== null).map(p => p.palabraHip);
+    if (refs.length && hips.length && (refs.length > 1 || hips.length > 1)
+        && refs.length <= MAXIMO_EN_JUNTURA && hips.length <= MAXIMO_EN_JUNTURA
+        && refs.join("") === hips.join("")) {
+      for (const p of tramo) if (p.idxRef !== null) {
+        p.op = Op.ACIERTO;
+        p.nota = "juntura: mismas letras, otra division de palabras";
+      }
+    }
+    i = j > i ? j : i + 1;
+  }
+  return pares;
+}
+
+/* Primero la resegmentacion, que puede convertir un tramo entero en aciertos, y despues la
+ * sinalefa, que necesita que la palabra ANTERIOR ya sea acierto para heredarle el veredicto. */
+export function repararJunturas(pares, display) {
+  return aplicarSinalefa(repararResegmentacion(pares), display);
+}
+
 /* Aplica la herencia por sinalefa sobre un resultado ya alineado. */
 export function aplicarSinalefa(pares, display) {
   for (let k = 0; k < pares.length; k++) {
@@ -230,7 +273,7 @@ export async function evaluar(blob, estimulo) {
   const hip = await transcribir(audio);
   const refNorm = estimulo.palabras.map(normalizar);
   let pares = alinear(refNorm, hip.palabras);
-  pares = aplicarSinalefa(pares, estimulo.palabras);
+  pares = repararJunturas(pares, estimulo.palabras);
   const r = puntuar(pares, hip.tiempos, duracion, estimulo.limite || 60);
   return { ...r, duracion, tiempos: hip.tiempos, transcripcion: hip.texto };
 }
@@ -267,7 +310,7 @@ export async function evaluarTarea(blob, estimulo) {
   const hip = await transcribir(audio);
   const refNorm = estimulo.palabras.map(normalizar);
   let pares = alinear(refNorm, hip.palabras);
-  if (!estimulo.esPorItem) pares = aplicarSinalefa(pares, estimulo.palabras);
+  if (!estimulo.esPorItem) pares = repararJunturas(pares, estimulo.palabras);
   const puntuador = estimulo.esPorItem ? puntuarItems : puntuar;
   const r = puntuador(pares, hip.tiempos, duracion, estimulo.limite || 60);
   return { ...r, duracion, tiempos: hip.tiempos, transcripcion: hip.texto };
