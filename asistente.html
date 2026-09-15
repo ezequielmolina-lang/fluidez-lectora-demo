@@ -308,22 +308,38 @@ const AVISO = {
 const COLUMNAS = { letras: 10, silabas: 5, palabras: 5, pseudopalabras: 5 };
 const ITEMS_CORTE = 10;
 
+const BANDA = { primaria: "Primaria", secundaria: "Secundaria" };
+
 async function cargarEstimulos(){
-  /* Las seis pruebas salen del banco del proyecto. Agregar una es agregar una entrada al
+  /* Las pruebas salen del banco del proyecto. Agregar una es agregar una entrada al
      archivo, no tocar código. */
   const bruto = await (await fetch("estimulos.json")).json();
-  estimulos = bruto.map(e => ({ id: e.id, tarea: e.tarea, limite: e.limite,
-                                palabras: e.palabras, esPorItem: e.es_por_item }));
+  estimulos = bruto.map(e => ({ id: e.id, tarea: e.tarea, limite: e.limite, banda: e.banda,
+                                palabras: e.palabras, esPorItem: e.es_por_item,
+                                preguntas: e.preguntas || [] }));
+
+  /* AGRUPADO POR BANDA, y no es cosmético: en secundaria hay estudiantes que todavía no
+     leen con fluidez, y el instrumento es el mismo con otro texto. Un pasaje de 60 palabras
+     se le termina en veinte segundos a un lector de secundaria que lee como se espera, así
+     que medir con el texto de segundo grado no mide fluidez. Es la población del programa
+     AVANZA+ del Banco Mundial en Colombia. */
   const cuantas = {}, visto = {};
-  estimulos.forEach(e => cuantas[e.tarea] = (cuantas[e.tarea] || 0) + 1);
+  estimulos.forEach(e => cuantas[e.tarea + e.banda] = (cuantas[e.tarea + e.banda] || 0) + 1);
   const sel = $("#sel");
+  const grupos = {};
   estimulos.forEach(e => {
-    const k = visto[e.tarea] = (visto[e.tarea] || 0) + 1;
+    if (!grupos[e.banda]) {
+      grupos[e.banda] = document.createElement("optgroup");
+      grupos[e.banda].label = BANDA[e.banda] || e.banda;
+      sel.append(grupos[e.banda]);
+    }
+    const clave = e.tarea + e.banda;
+    const k = visto[clave] = (visto[clave] || 0) + 1;
     const o = document.createElement("option");
     o.value = e.id;
-    o.textContent = NOMBRE[e.tarea] + (cuantas[e.tarea] > 1 ? " · forma " + "ABCD"[k-1] : "")
+    o.textContent = NOMBRE[e.tarea] + (cuantas[clave] > 1 ? " · forma " + "ABCD"[k-1] : "")
                   + " · " + e.palabras.length + (e.esPorItem ? " ítems" : " palabras");
-    sel.append(o);
+    grupos[e.banda].append(o);
   });
   /* Arranca en el pasaje: es la subtarea que da el PPM y la única que tiene grabación de
      ejemplo para el modo demostración. */
