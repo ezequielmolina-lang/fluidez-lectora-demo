@@ -438,77 +438,64 @@ audio{max-width:100%}
   muestra se estratifique a propósito.</p>
 </section>
 
-<!-- ============ 5b. LO QUE MEDIMOS ============ -->
+<!-- ============ 5b. QUE HACE Y QUE NO ============ -->
 <section>
-  <h3>Lo que medimos</h3>
-  <h2>28 grabaciones con la respuesta escrita antes de grabar</h2>
-  <p>Para saber si el programa detecta un error hay que saber, de antemano, que el error est&aacute; ah&iacute;.
-  As&iacute; que armamos <b>un juego de prueba congelado</b>: 28 grabaciones, <b>un solo tipo de error por
-  grabaci&oacute;n</b>, con la lista de qu&eacute; palabra se estrope&oacute; y c&oacute;mo, escrita antes de
-  sintetizar el audio. Mezclar errores en una misma toma es m&aacute;s realista y sirve de menos: cuando el
-  conteo se desv&iacute;a, no se sabe cu&aacute;l de los tipos lo caus&oacute;.</p>
+  <h3>En concreto</h3>
+  <h2>Qu&eacute; hace y qu&eacute; no hace este prototipo</h2>
+  <p>Todo lo que sigue est&aacute; <b>medido</b>, sobre 28 grabaciones de prueba con un solo tipo de error cada
+  una y la respuesta escrita antes de grabar. As&iacute; se sabe si el programa acierta, porque la verdad se
+  conoce de antemano.</p>
 
-  <h3 style="margin-top:22px">El hallazgo</h3>
-  <h2 style="font-size:23px">Lo que peor detecta es justo lo que m&aacute;s importa</h2>
-  <table>
-    <tr><th>Tipo de error</th><th>Lo detecta</th></tr>
-    <tr><td>Se saltea una palabra</td><td class="num">100%</td></tr>
-    <tr><td>Se saltea un rengl&oacute;n entero</td><td class="num">100%</td></tr>
-    <tr><td>Lee otra palabra distinta</td><td class="num">100%</td></tr>
-    <tr><td>Adivina por la primera s&iacute;laba: <i>mercado</i> por <i>merienda</i></td><td class="num">90%</td></tr>
-    <tr><td>Empieza la palabra y no la termina: <i>peque</i> por <i>peque&ntilde;a</i></td><td class="num">70%</td></tr>
-    <tr class="destacada"><td><b>Invierte letras</b>: <i>sol</i> por <i>los</i></td><td class="num">50%</td></tr>
-    <tr class="destacada"><td><b>Confunde letras parecidas</b>: <i>b</i> por <i>d</i></td><td class="num">40%</td></tr>
-    <tr class="destacada"><td><b>Se come una consonante</b>: <i>fores</i> por <i>flores</i></td><td class="num">37%</td></tr>
-  </table>
-  <p>El corte es n&iacute;tido. Los errores que dejan en el audio algo <b>claramente distinto</b> se detectan
-  casi siempre. Los que dejan un <b>casi acierto</b> se detectan menos de la mitad de las veces, porque el
-  reconocedor <b>repara al lector</b>: oye <i>caba</i> y escribe <i>cada</i>. Hace exactamente aquello para lo
-  que fue entrenado, que es transcribir bien, y es lo contrario de lo que esta medici&oacute;n necesita.</p>
-  <p><b>Y es justo al rev&eacute;s de lo que conviene.</b> Detectar que un chico se salte&oacute; un
-  rengl&oacute;n es f&aacute;cil y dice poco. Detectar que confunde la <i>b</i> con la <i>d</i> es dif&iacute;cil
-  y dice casi todo sobre si est&aacute; aprendiendo a leer. <b>Un promedio global esconder&iacute;a esto por
-  completo</b>: sobre el total da 76%, que suena bien y no significa nada.</p>
-
-  <h3 style="margin-top:22px">Lo que arreglamos</h3>
-  <h2 style="font-size:23px">El sistema castigaba al chico que silabea</h2>
-  <p>La otra mitad de la prueba es la que casi nunca se hace: <b>que el programa NO marque error donde no lo
-  hay</b>. Repetir una palabra, corregirse solo, dudar, silabear: todo eso es lo que hace un lector que est&aacute;
-  aprendiendo, y el protocolo lo cuenta como le&iacute;do.</p>
-  <p>Ah&iacute; apareci&oacute; el peor defecto, y no era t&eacute;cnico sino de qui&eacute;n lo paga: sobre una
-  lectura silabeada el sistema marcaba mal <b>7,3%</b> de las palabras y restaba <b>9,4 palabras por minuto</b>,
-  adem&aacute;s del tiempo que silabear ya cuesta. <b>Le bajaba el puntaje justo al chico que esta herramienta
-  existe para encontrar.</b></p>
-  <table>
-    <tr><th>Al medirlo encontramos</th><th>Antes</th><th>Ahora</th></tr>
-    <tr><td>Palabras mal marcadas sobre una lectura <b>perfecta</b></td><td class="num">1,3%</td><td class="num">0%</td></tr>
-    <tr class="destacada"><td>Palabras mal marcadas sobre una lectura <b>silabeada</b></td><td class="num">7,3%</td><td class="num">1,3%</td></tr>
-    <tr class="destacada"><td>Palabras por minuto que le restaba al que silabea</td><td class="num">9,4</td><td class="num">1,8</td></tr>
-    <tr><td>Errores de lectura que detecta</td><td class="num">76%</td><td class="num">76%</td></tr>
-  </table>
-  <p><b>Que la &uacute;ltima fila no se moviera es lo que hab&iacute;a que comprobar.</b> Si los arreglos
-  hubieran aflojado el criterio, la detecci&oacute;n habr&iacute;a subido junto con la ca&iacute;da de errores
-  falsos, y habr&iacute;amos cambiado un problema por otro sin enterarnos.</p>
-
-  <div class="card">
-    <h3>Las dos causas, que son la misma</h3>
-    <p style="margin-bottom:10px"><b>1. La frontera entre palabras no est&aacute; en el aire.</b> Sobre un
-    pasaje le&iacute;do sin ning&uacute;n error, el sistema marcaba mal dos palabras: donde dec&iacute;a
-    <i>&laquo;leer es&raquo;</i> el reconocedor escrib&iacute;a <i>&laquo;le eres&raquo;</i>. Es el mismo sonido
-    con otra divisi&oacute;n. Quien lee bien <i>leer es</i> produce exactamente la misma onda.</p>
-    <p style="margin-bottom:0"><b>2. El mismo sonido se escribe de varias formas.</b> Al leer
-    <i>&laquo;Ca-da&raquo;</i> con una pausa, el reconocedor escribe <i>&laquo;ka da&raquo;</i>: la s&iacute;laba
-    suelta se transcribe por su sonido, porque no hay palabra alrededor que la ancle. El chico le&iacute;a bien;
-    lo que fallaba era <b>comparar letras donde hab&iacute;a que comparar sonidos</b>.</p>
+  <div class="grid3" style="grid-template-columns:1fr 1fr">
+    <div class="dato g" style="text-align:left">
+      <b style="font-size:19px">Qu&eacute; hace</b>
+      <span style="margin-top:8px">Escucha leer y devuelve <b>palabras correctas por minuto</b>, con cada
+      palabra marcada.<br><br>
+      Detecta casi siempre los errores que dejan algo <b>claramente distinto</b>: se saltea una palabra, se
+      saltea un rengl&oacute;n, lee otra palabra, adivina por la primera s&iacute;laba. <b>Del 90% al
+      100%.</b><br><br>
+      <b>No marca error donde no lo hay</b>: sobre una lectura perfecta no marca <b>ninguna</b> palabra mal, y
+      sobre una lectura silabeada, el <b>1,3%</b>.<br><br>
+      Cubre las <b>cinco subtareas</b> del protocolo y tambi&eacute;n <b>secundaria</b>. Corre en un
+      tel&eacute;fono, sin internet.</span>
+    </div>
+    <div class="dato r" style="text-align:left">
+      <b style="font-size:19px">Qu&eacute; no hace</b>
+      <span style="margin-top:8px"><b>No detecta bien el error fino de decodificaci&oacute;n</b>, que es
+      justamente el que m&aacute;s dice sobre si un chico est&aacute; aprendiendo a leer: confundir
+      <i>b</i> con <i>d</i>, <b>40%</b>; invertir letras, <b>50%</b>; comerse una consonante, <b>37%</b>.<br><br>
+      <b>No mide comprensi&oacute;n ni entonaci&oacute;n.</b> Las preguntas las sigue tomando una persona.<br><br>
+      <b>No puntúa un audio que no se pudo evaluar.</b> Si sale mudo o con ruido responde «no evaluable» con el
+      motivo, nunca un cero.<br><br>
+      <b>No se prob&oacute; con ni&ntilde;os</b>, y nunca se compar&oacute; con un panel de evaluadores.</span>
+    </div>
   </div>
-  <p class="fuente"><b>Los dos arreglos est&aacute;n acotados a prop&oacute;sito</b>, y la mitad de las pruebas
-  del c&oacute;digo existe para fijar lo que <b>no</b> perdonan: <i>caba</i> por <i>cada</i> sigue siendo un
-  error, <i>los</i> por <i>sol</i> tambi&eacute;n, y una omisi&oacute;n sigue siendo una omisi&oacute;n.</p>
+
+  <p><b>Por qu&eacute; se le escapa el error fino.</b> El reconocedor <b>repara al lector</b>: oye <i>caba</i> y
+  escribe <i>cada</i>, oye <i>fores</i> y escribe <i>flores</i>. Hace exactamente aquello para lo que fue
+  entrenado, que es transcribir bien, y es lo contrario de lo que esta medici&oacute;n necesita. Eso no se
+  arregla con reglas: se arregla entren&aacute;ndolo con voces de chicos que leen mal, que es la pieza que
+  falta.</p>
+
+  <div class="card" style="border-left:4px solid var(--rojo)">
+    <h3 style="color:var(--rojo)">El riesgo m&aacute;s serio, y todav&iacute;a sin verificar</h3>
+    <p style="margin-bottom:0">El quechua y el aimara tienen <b>tres vocales donde el espa&ntilde;ol tiene
+    cinco</b>, y sus hablantes intercambian e con i, y o con u. Si el sistema lo marcara como error,
+    <b>estar&iacute;a midiendo lengua materna y llam&aacute;ndolo fluidez</b>, y reportar&iacute;a como
+    rezagadas justamente a las escuelas ind&iacute;genas. <b>Se verifica antes que nada</b>, y con adultos, que
+    no requieren permiso.</p>
+  </div>
+
+  <p class="fuente">Por qu&eacute; hace falta grabar gente de verdad y no alcanza con imaginar los errores: en
+  la primera grabaci&oacute;n humana apareci&oacute; que la palabra <b>«a»</b> tras otra terminada en «a», como
+  en «camina a la escuela», <b>desaparece del audio</b> porque las vocales se funden al hablar. El programa la
+  daba por no le&iacute;da. No es un error del lector, es espa&ntilde;ol bien hablado, y nadie lo habr&iacute;a
+  previsto.</p>
 
   <div class="alerta" style="margin-top:20px">
-  <b>Todo esto es voz sintetizada de adulto.</b> Mide c&oacute;mo se comporta el programa frente a la
-  <b>forma</b> de cada error, y sirve para que nada se rompa en silencio cuando se toca el c&oacute;digo.
-  <b>No dice nada sobre ni&ntilde;os peruanos</b>, y los porcentajes por tipo se apoyan en 8 o 10 casos cada uno.
+  <b>Todo lo medido es voz sintetizada de adulto.</b> Mide c&oacute;mo se comporta el programa frente a la
+  <b>forma</b> de cada error. <b>No dice nada sobre ni&ntilde;os peruanos</b>, y cada porcentaje por tipo se
+  apoya en 8 o 10 casos.
   </div>
 </section>
 
@@ -525,29 +512,7 @@ audio{max-width:100%}
   teléfono</b>. No hay clave de servicio, no hay tarifa por estudiante, no hay proveedor al que pagarle, y
   <b style="color:#fff">el audio no sale del dispositivo</b>. Del orden de 460 horas de procesador por cada
   100.000 estudiantes, en una máquina común y sin placa de video.</p>
-  <p style="color:rgba(240,238,230,.78);font-size:14px;margin-bottom:0"><b style="color:rgba(255,255,255,.9)">Lo
-  que sí sigue costando</b>, dicho de frente: el tiempo de quien se sienta con el niño, que es el que ya se
-  gasta hoy y que con esto se gasta menos, porque el evaluador deja de cronometrar y de contar. Una vez, unas
-  horas de máquina para ajustar el modelo. Y alguien que lo mantenga, porque un modelo abierto no se mantiene
-  solo.</p>
 </div>
-</section>
-
-<section>
-  <h3>Dos reglas</h3>
-  <h2>Lo que el sistema nunca hace, y lo que falta verificar</h2>
-  <table>
-    <tr><td style="width:36%"><b>Un audio que no se pudo evaluar<br>no es un cero</b></td>
-      <td>Si sale mudo, con ruido o muy corto, responde <b>«no evaluable» con el motivo</b>. Si no, mediría la
-      calidad del micrófono y la llamaría fluidez.</td></tr>
-    <tr><td><b>El riesgo más serio,<br>sin verificar</b></td>
-      <td>Si penaliza el <b>intercambio de vocales e/i y o/u</b> de hablantes de quechua y aimara, estaría
-      midiendo lengua materna y llamándolo fluidez. Se verifica antes que nada.</td></tr>
-  </table>
-  <p class="fuente" style="margin-top:14px">Por qué hace falta grabar niños y no alcanza con imaginar los
-  errores: en la primera grabación humana apareció que la palabra <b>«a»</b> tras otra terminada en «a», como
-  en «camina a la escuela», <b>desaparece del audio</b> porque las vocales se funden al hablar. El programa la
-  daba por no leída. No es un error del lector, es español bien hablado, y nadie lo habría previsto.</p>
 </section>
 
 <section>
