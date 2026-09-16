@@ -201,6 +201,33 @@ export async function armarZip(archivos) {
  * Las etiquetas van en CSV y en JSON a proposito. El CSV lo abre cualquiera en una planilla
  * y sirve para revisar en el momento; el JSON conserva la marca palabra por palabra, que es
  * lo que el entrenamiento necesita y lo que una planilla arruinaria. */
+/* El orden PREFERIDO de las columnas. No es la lista completa a proposito.
+ *
+ * POR QUE NO ES UNA LISTA FIJA: lo era, y se quedo vieja sin que nadie se enterara. El
+ * asistente empezo a guardar `humano` y `maquina`, el veredicto palabra por palabra de cada
+ * uno, que es EXACTAMENTE el dato por el que existe este paquete, y la planilla no los
+ * exportaba porque no estaban en la lista. Peor: el LEAME los describia como "las dos
+ * columnas que importan". El dato seguia en etiquetas.json, asi que no se perdio, pero la
+ * planilla que abre cualquiera no los tenia.
+ *
+ * Ahora esta lista solo manda el ORDEN. Cualquier campo que el asistente guarde y no este
+ * aca se agrega igual, al final. Una columna nueva puede quedar mal ubicada; ninguna puede
+ * desaparecer en silencio. */
+const ORDEN_PREFERIDO = [
+  "archivo", "codigo", "estimulo", "tarea", "modo", "fecha", "duracion", "segundos",
+  "pcpm_humano", "correctas_humano", "estado_humano",
+  "pcpm_maquina", "correctas_maquina", "estado_maquina", "correcciones",
+  "humano", "maquina", "palabras_estimulo", "transcripcion",
+  "escuela", "region", "grado", "lengua_materna", "ruido", "evaluador", "formato",
+];
+
+export function columnas(tomas) {
+  const vistos = new Set(tomas.flatMap((t) => Object.keys(t)));
+  vistos.delete("id");  // es la clave interna de IndexedDB, no dice nada de la toma
+  return ORDEN_PREFERIDO.filter((c) => vistos.has(c))
+    .concat([...vistos].filter((c) => !ORDEN_PREFERIDO.includes(c)).sort());
+}
+
 export async function paqueteParaEntregar() {
   const tomas = await listar();
   const archivos = [];
@@ -210,10 +237,7 @@ export async function paqueteParaEntregar() {
     if (blob) archivos.push({ nombre: `audio/${t.archivo}`, datos: blob });
   }
 
-  const cols = ["archivo", "codigo", "estimulo", "tarea", "modo", "fecha", "duracion", "segundos",
-                "pcpm_humano", "correctas_humano", "estado_humano", "pcpm_maquina",
-                "correctas_maquina", "estado_maquina", "correcciones", "escuela", "region",
-                "grado", "lengua_materna", "ruido", "evaluador"];
+  const cols = columnas(tomas);
   const csv = [cols.join(",")].concat(
     tomas.map((t) => cols.map((c) => JSON.stringify(t[c] ?? "")).join(","))
   ).join("\n");
@@ -238,13 +262,26 @@ QUE HAY ACA
   etiquetas.json    lo mismo, mas la marca PALABRA POR PALABRA, que es lo que sirve para
                     entrenar y lo que una planilla arruinaria.
 
-LAS DOS COLUMNAS QUE IMPORTAN
+LAS TRES COLUMNAS QUE IMPORTAN
 
   "humano"   lo que marco la persona: un 1 por palabra leida bien, un 0 por palabra mal.
   "maquina"  lo que habia propuesto el programa, en el mismo formato.
 
+  Los dos son una cadena de digitos, uno por palabra del estimulo y EN ORDEN: el digito i
+  corresponde a la palabra i de la lista o del pasaje que dice la columna "estimulo". Esas
+  listas estan en el repositorio, en stimuli/. La columna "palabras_estimulo" dice cuantas
+  tiene que haber, para poder comprobar que la cadena no vino cortada.
+
   Donde difieren esta el dato valioso: es el error del programa, senialado por alguien que
-  estaba escuchando al chico.
+  estaba escuchando al chico. La columna "correcciones" cuenta en cuantas difieren.
+
+  "transcripcion"  lo que el reconocedor entendio, en crudo, antes de compararlo con nada.
+
+  Es lo unico del paquete que no se puede reconstruir despues. Con la transcripcion se puede
+  volver a alinear y a puntuar con otro algoritmo sin correr el reconocedor de nuevo sobre
+  cientos de audios; sin ella, probar una idea nueva cuesta una tarde de computo.
+
+  Las tomas grabadas antes de setiembre de 2026 no la traen.
 
 SIN NOMBRES
 

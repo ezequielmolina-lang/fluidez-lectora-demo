@@ -801,9 +801,19 @@ $("#btn-guardar").onclick = () => {
     correctas_maquina: marcasMaquina.filter(Boolean).length,
     estado_maquina: resultado.estado,
     correcciones: marcas.filter((m, i) => m !== marcasMaquina[i]).length,
-    /* lo que vale para entrenar: el veredicto de cada uno, palabra por palabra */
+    /* lo que vale para entrenar: el veredicto de cada uno, palabra por palabra.
+       Un digito por palabra del estimulo, en orden, asi que la posicion i corresponde a la
+       palabra i de `estimulo`. Donde difieren esta el error de la maquina, señalado por
+       alguien que estaba escuchando al chico. */
     humano: marcas.map(m => m ? 1 : 0).join(""),
     maquina: marcasMaquina.map(m => m ? 1 : 0).join(""),
+    palabras_estimulo: actual.palabras.length,
+    /* LO QUE DIJO EL RECONOCEDOR, en crudo.
+       Es lo unico del paquete que no se puede reconstruir despues: con la transcripcion se
+       puede volver a alinear y a puntuar con otro algoritmo sin tener que correr el
+       reconocedor de nuevo sobre cientos de audios. Sin ella, cada prueba de una idea nueva
+       cuesta una tarde de computo. */
+    transcripcion: resultado.transcripcion ?? "",
   };
   /* EL AUDIO SE GUARDA. Sin esto, una jornada entera de trabajo deja una planilla y ningun
      dato de entrenamiento, que es justamente lo que el proyecto necesita. */
