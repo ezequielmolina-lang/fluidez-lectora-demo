@@ -596,7 +596,14 @@ async function cargarEstimulos(){
   /* La huella del archivo, no de lo que quedo en memoria: identifica con que material se
      midio, y cambia sola el dia que alguien corrige un item. */
   try {
-    const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
+    /* Normalizado el fin de linea antes de resumir: el mismo archivo servido desde un
+       repositorio en Windows y desde el sitio publicado tiene los mismos estimulos y
+       distintos bytes, y daba dos huellas distintas para el mismo material. La huella tiene
+       que identificar QUE se midio, no de donde se sirvio. */
+    const plano = texto.replace(/
+/g, "
+");
+    const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(plano));
     huellaEstimulos = [...new Uint8Array(h)].slice(0, 4)
       .map(b => b.toString(16).padStart(2, "0")).join("");
   } catch { huellaEstimulos = ""; }
