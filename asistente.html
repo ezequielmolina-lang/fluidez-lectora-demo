@@ -367,6 +367,10 @@ const $ = s => document.querySelector(s);
 /* El nombre del estudiante lo escribe una persona y se pinta con innerHTML.
    Un apellido con un `<` romperia la tabla, y algo peor escrito a proposito haria algo
    peor. Todo lo que venga de un campo de texto pasa por aca antes de entrar al HTML. */
+/* "a, b y c", no "a y b y c". Lo lee una persona apurada al final de una jornada. */
+const enLista = (xs) => xs.length < 2 ? (xs[0] ?? "")
+  : xs.slice(0, -1).join(", ") + " y " + xs[xs.length - 1];
+
 const esc = t => String(t).replace(/[&<>"']/g,
   c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLAVE = "fluidez.registros.v1";
@@ -533,10 +537,30 @@ $("#btn-jornada").onclick = async () => {
       "<b>Falta confirmar el consentimiento.</b> Sin eso no se puede grabar a un menor.";
     return;
   }
+  /* ESCUELA, REGION Y EVALUADOR SON OBLIGATORIOS.
+   *
+   * Se aceptaban vacios y quedaban como "sin indicar". La aplicacion dice, dos parrafos mas
+   * arriba, que sin estos datos el audio sirve para entrenar pero NO para comprobar que el
+   * sistema no discrimina, "que es la pregunta que mas importa". Decir eso y despues dejar
+   * seguir sin completarlos es una contradiccion, y no una teorica: el primer paquete
+   * exportado desde un telefono de verdad llego con escuela, region y evaluador en "sin
+   * indicar", y esas grabaciones no se pueden usar para comparar grupos.
+   *
+   * La seccion sigue siendo opcional porque no todas las escuelas las tienen. */
+  const faltan = [["j-evaluador", "quién toma la prueba"], ["j-escuela", "la escuela"],
+                  ["j-region", "la región"]].filter(([id]) => !$("#" + id).value.trim());
+  if (faltan.length) {
+    $("#aviso-espacio").innerHTML =
+      `<b>Falta completar ${enLista(faltan.map(([, q]) => q))}.</b> Sin eso las ` +
+      "grabaciones sirven para entrenar pero no para comprobar que el sistema no " +
+      "discrimina, que es la comparación que más importa.";
+    $("#" + faltan[0][0]).focus();
+    return;
+  }
   jornada = {
-    evaluador: $("#j-evaluador").value.trim() || "sin indicar",
-    escuela: $("#j-escuela").value.trim() || "sin indicar",
-    region: $("#j-region").value.trim() || "sin indicar",
+    evaluador: $("#j-evaluador").value.trim(),
+    escuela: $("#j-escuela").value.trim(),
+    region: $("#j-region").value.trim(),
     /* La letra de la tablet se antepone a cada codigo. Es lo que hace que dos evaluadores
        que empiecen los dos en 014 no produzcan el mismo codigo, que era un problema que
        hasta ahora prevenia solamente una convencion escrita en un documento. */
