@@ -108,6 +108,12 @@ input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
 
 .nota{background:#fff8e6;border:1px solid #f0dfae;border-radius:10px;padding:12px 14px;
   font-size:13px;color:#5b4406;line-height:1.5;margin-top:12px}
+/* Una nota sin texto es un recuadro amarillo vacio, no una nota.
+   Aparecio el 2026-09-16 en un iPhone: al mover el aviso de espacio al panel de guardados,
+   el aviso del paso 0 quedo vacio hasta que se toca "Preparar el equipo", y mientras tanto
+   se veia una caja amarilla flotando sin ningun contenido. Vale para cualquier `.nota` que
+   se llene desde el codigo, no solo para esa. */
+.nota:empty{display:none}
 .noeval{background:var(--rojo-f);border:1px solid #f0c8c5;border-radius:10px;padding:14px;
   font-size:14px;color:#7a2a25;line-height:1.5}
 .noeval b{color:var(--rojo)}
