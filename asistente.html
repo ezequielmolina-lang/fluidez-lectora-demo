@@ -57,6 +57,16 @@ input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
 .btn.rojo .pt{animation:late 1s infinite}
 @keyframes late{0%,100%{opacity:1}50%{opacity:.2}}
 
+/* La barra de accion, pegada al borde de abajo de la pantalla mientras el paso esta a la
+   vista. Es lo ultimo del paso a proposito: un elemento pegajoso tapa lo que viene despues,
+   asi que no viene nada despues. */
+.acciones{position:sticky;bottom:0;z-index:20;background:var(--cream2);
+  margin:14px -18px -18px;padding:10px 18px calc(14px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line)}
+/* El reloj y el aviso, mas chicos adentro de la barra: cada pixel que ocupa es un renglon
+   menos de pasaje a la vista, y el pasaje es lo que el evaluador sigue con el dedo. */
+.acciones .reloj{font-size:32px;margin:0;line-height:1}
+.acciones .aviso{font-size:12.5px;margin:4px 0 8px}
 .reloj{font:700 52px var(--mono);letter-spacing:-.04em;color:var(--ink2);text-align:center;margin:10px 0 4px}
 .reloj.pasado{color:var(--rojo)}
 .reloj small{font:400 14px var(--sans);color:var(--muted)}
@@ -290,21 +300,30 @@ a{color:var(--teal)}
     <span class="num">Paso 2</span>
     <h2 id="titulo-prueba">Que el estudiante lea en voz alta</h2>
     <p class="consigna" id="consigna"></p>
+    <button class="btn borde chico" id="btn-hoja">Mostrar la hoja del estudiante</button>
     <div class="pasaje" id="pasaje-lectura"></div>
     <div class="nota oculto" id="aviso-subtarea"></div>
-    <div class="reloj" id="reloj">0<small> s</small></div>
-    <div class="aviso" id="aviso-grabar">Tocá grabar cuando el estudiante esté listo.</div>
-    <button class="btn" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar</span></button>
     <div class="barra oculto" id="barra"><div id="barra-in"></div></div>
     <div class="nota oculto" id="nota-descarga">Preparando el reconocedor. Se descarga una sola vez y después
     funciona sin señal.</div>
-    <button class="btn borde chico" id="btn-hoja">Mostrar la hoja del estudiante</button>
-    <button class="btn claro chico" id="btn-no-quiso" style="margin-top:8px">El estudiante no quiso
-    hacer esta prueba</button>
     <div class="nota oculto" id="aviso-modo"><b>Modo «de a uno» activado.</b> Se lee mejor en un teléfono y
     deja cada ítem con su audio limpio, pero el ritmo lo marca el dedo y se pierde el barrido visual: este
     puntaje <b>no se compara con las normas</b> ni con una aplicación en hoja completa. Queda registrado como
     tal.</div>
+    <button class="btn claro chico" id="btn-no-quiso">El estudiante no quiso hacer esta prueba</button>
+
+    <!-- EL CONTROL DE GRABAR VA PEGADO AL BORDE DE ABAJO, SIEMPRE A LA VISTA.
+         Estaba debajo del pasaje, y un pasaje de 90 palabras ocupa mas que una pantalla de
+         telefono: el evaluador abria la prueba, veia el texto, y empezaba a leer sin haber
+         tocado grabar porque el boton no estaba en pantalla. Paso en la primera prueba real,
+         el 2026-09-16.
+         Y va el MISMO boton para empezar y para detener, en el mismo lugar. Separarlos, uno
+         arriba y otro abajo, obliga a buscar un boton distinto con el chico leyendo. -->
+    <div class="acciones" id="acciones-grabar">
+      <div class="reloj" id="reloj">0<small> s</small></div>
+      <div class="aviso" id="aviso-grabar">Tocá grabar cuando el estudiante esté listo.</div>
+      <button class="btn" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar</span></button>
+    </div>
   </div>
 
   <!-- 3. revisar -->
