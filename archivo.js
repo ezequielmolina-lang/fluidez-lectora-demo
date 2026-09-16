@@ -287,6 +287,8 @@ const ORDEN_PREFERIDO = [
   "pcpm_maquina", "correctas_maquina", "estado_maquina", "correcciones",
   "humano", "maquina", "palabras_estimulo", "transcripcion",
   "escuela", "region", "grado", "lengua_materna", "ruido", "evaluador", "formato",
+  // De que version salio el dato y de que equipo. Es lo que permite comparar y rehacer.
+  "version_app", "huella_estimulos", "equipo",
 ];
 
 export function columnas(tomas) {

@@ -290,6 +290,8 @@ a{color:var(--teal)}
     <div class="nota oculto" id="nota-descarga">Preparando el reconocedor. Se descarga una sola vez y después
     funciona sin señal.</div>
     <button class="btn borde chico" id="btn-hoja">Mostrar la hoja del estudiante</button>
+    <button class="btn claro chico" id="btn-no-quiso" style="margin-top:8px">El estudiante no quiso
+    hacer esta prueba</button>
     <div class="nota oculto" id="aviso-modo"><b>Modo «de a uno» activado.</b> Se lee mejor en un teléfono y
     deja cada ítem con su audio limpio, pero el ritmo lo marca el dedo y se pierde el barrido visual: este
     puntaje <b>no se compara con las normas</b> ni con una aplicación en hoja completa. Queda registrado como
@@ -356,6 +358,37 @@ const esc = t => String(t).replace(/[&<>"']/g,
   c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLAVE = "fluidez.registros.v1";
 const CLAVE_JORNADA = "fluidez.jornada.v1";
+
+/* DE QUE VERSION SALIO CADA DATO.
+ *
+ * Un corpus que se junta a lo largo de meses mezcla tomas puntuadas por versiones distintas
+ * del programa y leidas de listas distintas. Sin saber cual produjo cada fila no se puede
+ * comparar nada ni rehacer un analisis, y es lo primero que pide cualquiera que reciba datos
+ * de campo. Es la version del formulario de un SurveyCTO.
+ *
+ * `VERSION_APP` se escribe a mano y por eso puede quedar vieja. `huella_estimulos` no: es el
+ * resumen del propio archivo de estimulos, calculado al abrir, asi que cambia solo el dia
+ * que alguien corrige un item y es lo que de verdad identifica con que material se midio. */
+const VERSION_APP = "2026-09-16";
+let huellaEstimulos = "";
+
+/* EL IDENTIFICADOR DEL EQUIPO, que no lo escribe nadie.
+ *
+ * La letra de la tablet la pone una persona, y una persona puede dejar dos tablets en "A".
+ * Esto es un numero al azar que se guarda la primera vez y no se repite, asi que al juntar
+ * los paquetes se ve si dos equipos distintos usaron la misma letra aunque el codigo de los
+ * estudiantes se parezca. */
+const CLAVE_EQUIPO = "fluidez.equipo.v1";
+function idDelEquipo(){
+  try {
+    let id = localStorage.getItem(CLAVE_EQUIPO);
+    if (!id) {
+      id = (crypto.randomUUID?.() || String(Math.random())).replace(/-/g, "").slice(0, 8);
+      localStorage.setItem(CLAVE_EQUIPO, id);
+    }
+    return id;
+  } catch { return ""; }
+}
 
 /* LA JORNADA: se completa una vez y viaja pegada a cada toma.
  *
@@ -479,7 +512,15 @@ const BANDA = { primaria: "Primaria", secundaria: "Secundaria" };
 async function cargarEstimulos(){
   /* Las pruebas salen del banco del proyecto. Agregar una es agregar una entrada al
      archivo, no tocar código. */
-  const bruto = await (await fetch("estimulos.json")).json();
+  const texto = await (await fetch("estimulos.json")).text();
+  /* La huella del archivo, no de lo que quedo en memoria: identifica con que material se
+     midio, y cambia sola el dia que alguien corrige un item. */
+  try {
+    const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
+    huellaEstimulos = [...new Uint8Array(h)].slice(0, 4)
+      .map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch { huellaEstimulos = ""; }
+  const bruto = JSON.parse(texto);
   estimulos = bruto.map(e => ({ id: e.id, tarea: e.tarea, limite: e.limite, banda: e.banda,
                                 palabras: e.palabras, esPorItem: e.es_por_item,
                                 preguntas: e.preguntas || [] }));
@@ -531,11 +572,25 @@ async function verCodigo(){
     ? `Se va a guardar como <b>${esc(cod)}</b>` : "";
   if (!cod) { $("#vista-nombre").textContent = ""; return; }
   const anotado = (await estudiantes()).get(cod);
-  if (anotado && !$("#nombre").value.trim()) $("#nombre").value = anotado.nombre;
+  if (anotado && !$("#nombre").value.trim()) {
+    $("#nombre").value = anotado.nombre;
+    $("#nombre").dataset.recordado = "1";
+  }
   $("#vista-nombre").textContent = anotado
-    ? `Ya estaba anotado como ${anotado.nombre}.` : "";
+    ? `Ya estaba anotado como ${anotado.nombre}. Tocá el nombre si hay que corregirlo.` : "";
 }
 $("#codigo").oninput = verCodigo;
+
+/* EL NOMBRE RECORDADO SE SELECCIONA ENTERO AL TOCARLO.
+ *
+ * Sin esto, el evaluador que toca el campo y escribe queda con el cursor en el medio de lo
+ * que la app habia puesto, y el nombre sale intercalado: "Marisol Quispe HMarisol Quispe
+ * Huamanuaman". Aparecio el 2026-09-16 haciendo el recorrido completo en el celular, y
+ * habria pasado igual con un dedo: la app rellena, la persona escribe encima, y el resultado
+ * no se parece a ninguno de los dos nombres. Seleccionado entero, escribir lo reemplaza. */
+$("#nombre").onfocus = function(){
+  if (this.dataset.recordado === "1") { this.select(); delete this.dataset.recordado; }
+};
 
 $("#btn-empezar").onclick = async () => {
   const cod = codigoCompleto();
@@ -690,6 +745,41 @@ function cambiarModo(uno){
 $("#m-hoja").onclick = () => cambiarModo(false);
 $("#m-uno").onclick = () => cambiarModo(true);
 $("#btn-hoja").onclick = abrirHoja;
+
+/* EL CHICO QUE NO QUIERE, que hasta ahora no se podia registrar sin mentir.
+ *
+ * El apoderado da el consentimiento, pero el chico tiene que dar su asentimiento y puede no
+ * darlo, y eso hay que respetarlo y anotarlo. Sin esta opcion el evaluador tenia tres
+ * salidas y las tres estaban mal: grabar igual, dejarlo afuera de la planilla, o poner un
+ * cero. Un cero dice "lo intento y no leyo nada", que es exactamente lo contrario de lo que
+ * paso, y arrastra el promedio hacia abajo por una razon que no es de lectura.
+ *
+ * NO_PARTICIPA no es DESCONTINUADO (un cero legitimo del protocolo) ni NO_EVALUABLE (el
+ * audio no se pudo puntuar). Es un caso distinto y se cuenta aparte. */
+$("#btn-no-quiso").onclick = async () => {
+  const b = $("#btn-no-quiso");
+  b.disabled = true;
+  try {
+    await guardar({
+      id: Date.now(), codigo: $("#est-cabecera").textContent, estimulo: actual.id,
+      tarea: actual.tarea, modo: "", fecha: new Date().toISOString(),
+      duracion: 0, segundos: 0,
+      pcpm_humano: null, correctas_humano: null, estado_humano: "NO_PARTICIPA",
+      pcpm_maquina: null, correctas_maquina: null, estado_maquina: "NO_PARTICIPA",
+      correcciones: 0, humano: "", maquina: "",
+      palabras_estimulo: actual.palabras.length, transcripcion: "",
+      archivo: "", formato: "",
+      version_app: VERSION_APP, huella_estimulos: huellaEstimulos, equipo: idDelEquipo(),
+      escuela: jornada?.escuela ?? "", region: jornada?.region ?? "",
+      grado: jornada?.grado ?? "", evaluador: jornada?.evaluador ?? "",
+      lengua_materna: $("#lengua").value, ruido: $("#ruido").checked ? "si" : "no",
+    }, null);
+    await pintarRegistros();
+    volverAlInicio();
+  } catch (e) {
+    $("#aviso-grabar").textContent = "No se pudo anotar: " + e.message;
+  } finally { b.disabled = false; }
+};
 $("#btn-cerrar-hoja").onclick = () => document.getElementById("hoja").classList.remove("abierta");
 $("#btn-imprimir").onclick = () => print();
 
@@ -732,10 +822,16 @@ function reloj(){
 const FORMATOS = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
 const FORMATO = FORMATOS.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || "";
 
-const EXTENSIONES = { webm: "webm", mp4: "m4a", mpeg: "mp3", ogg: "ogg" };
+/* `mp3` ademas de `mpeg`: el navegador escribe el tipo de las dos maneras segun de donde
+   venga el blob, y con "audio/mp3" la tabla no encontraba nada. El respaldo tampoco servia:
+   un archivo llamado .bin no lo abre ningun reproductor, asi que quien recibiera el paquete
+   tendria audio bueno con un nombre que nadie puede usar. Visto el 2026-09-16 probando el
+   recorrido completo en el celular. */
+const EXTENSIONES = { webm: "webm", mp4: "m4a", m4a: "m4a", mpeg: "mp3", mp3: "mp3",
+                      ogg: "ogg", wav: "wav", aac: "aac", flac: "flac" };
 function extensionDe(tipo){
-  const m = /audio\/([a-z0-9]+)/i.exec(tipo || "");
-  return (m && EXTENSIONES[m[1].toLowerCase()]) || "bin";
+  const m = /audio\/(?:x-)?([a-z0-9]+)/i.exec(tipo || "");
+  return (m && (EXTENSIONES[m[1].toLowerCase()] || m[1].toLowerCase())) || "webm";
 }
 
 const DEMO = new URLSearchParams(location.search).get("demo") === "1";
@@ -869,6 +965,9 @@ $("#btn-guardar").onclick = () => {
        reconocedor de nuevo sobre cientos de audios. Sin ella, cada prueba de una idea nueva
        cuesta una tarde de computo. */
     transcripcion: resultado.transcripcion ?? "",
+    version_app: VERSION_APP,
+    huella_estimulos: huellaEstimulos,
+    equipo: idDelEquipo(),
   };
   /* EL AUDIO SE GUARDA. Sin esto, una jornada entera de trabajo deja una planilla y ningun
      dato de entrenamiento, que es justamente lo que el proyecto necesita. */
@@ -898,6 +997,15 @@ function volverAlInicio(){
   $("#paso2").classList.add("oculto");
   $("#paso1").classList.remove("oculto");
   $("#codigo").value = ""; $("#codigo").focus();
+  /* EL NOMBRE TAMBIEN SE LIMPIA, y esto no es prolijidad.
+     Se limpiaba el codigo y no el nombre, asi que al pasar al siguiente estudiante el campo
+     seguia con el nombre del anterior, y como verCodigo() solo rellena cuando esta vacio,
+     nadie lo corregia: al guardar, el chico 015 quedaba anotado con el nombre del 014.
+     Un nombre mal asignado es peor que ningun nombre. */
+  $("#nombre").value = "";
+  delete $("#nombre").dataset.recordado;
+  $("#vista-codigo").textContent = "";
+  $("#vista-nombre").textContent = "";
   $("#est-cabecera").textContent = "";
   $("#reloj").innerHTML = "0<small> s</small>";
   $("#aviso-grabar").textContent = DEMO
