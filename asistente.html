@@ -210,6 +210,13 @@ a{color:var(--teal)}
     <input id="j-escuela" autocomplete="off" placeholder="ej. IE 80017 Ascope">
     <label for="j-region">Región</label>
     <input id="j-region" autocomplete="off" placeholder="ej. La Libertad">
+    <label for="j-dispositivo">Letra de esta tablet</label>
+    <input id="j-dispositivo" autocomplete="off" maxlength="3" placeholder="ej. A" value="A">
+    <div class="pie" style="margin:-6px 0 12px">Si hay varias tablets, cada una lleva una letra
+    distinta. Se antepone a cada código, así que dos evaluadores que empiecen los dos en 014
+    no producen el mismo código y los paquetes se pueden juntar sin ambigüedad.</div>
+    <label for="j-seccion">Sección (opcional)</label>
+    <input id="j-seccion" autocomplete="off" maxlength="12" placeholder="ej. B">
     <label for="j-grado">Grado</label>
     <select id="j-grado">
       <option value="1">1.º de primaria</option>
@@ -227,8 +234,10 @@ a{color:var(--teal)}
     <div class="nota" style="margin-bottom:12px"><label style="display:flex;gap:10px;align-items:flex-start;
       color:var(--body);font-size:13.5px;margin:0;cursor:pointer">
       <input type="checkbox" id="j-consent" style="width:auto;margin:2px 0 0">
-      <span><b>Confirmo que hay consentimiento del apoderado</b> para grabar la voz de cada estudiante,
-      y que <b>no voy a escribir nombres</b> en esta aplicación.</span></label></div>
+      <span><b>Confirmo que hay consentimiento del apoderado</b> para grabar la voz de cada estudiante.
+      Los nombres que escriba <b>quedan en esta tablet</b> y <b>no salen en el paquete de
+      grabaciones</b>: salen solo en la planilla de la escuela, que se descarga aparte y no lleva
+      audio.</span></label></div>
 
     <button class="btn" id="btn-jornada">Empezar la jornada</button>
     <button class="btn claro chico" id="btn-preparar" style="margin-top:10px">Preparar el equipo</button>
@@ -240,8 +249,12 @@ a{color:var(--teal)}
   <div class="paso oculto" id="paso1">
     <span class="num">Paso 1</span>
     <h2>¿A quién y qué se le toma?</h2>
-    <label for="codigo">Código del estudiante (sin nombres)</label>
-    <input id="codigo" inputmode="text" autocomplete="off" placeholder="ej. 2B-014">
+    <label for="codigo">Número o código del estudiante</label>
+    <input id="codigo" inputmode="text" autocomplete="off" placeholder="ej. 014">
+    <div class="pie" id="vista-codigo" style="margin:-6px 0 12px"></div>
+    <label for="nombre">Nombre del estudiante (queda en esta tablet)</label>
+    <input id="nombre" autocomplete="off" placeholder="opcional, para la planilla de la escuela">
+    <div class="pie" id="vista-nombre" style="margin:-6px 0 12px"></div>
     <label for="lengua">Lengua materna del estudiante</label>
     <select id="lengua">
       <option value="castellano">Castellano</option>
@@ -258,8 +271,9 @@ a{color:var(--teal)}
       Hay ruido de fondo ahora mismo
     </label>
     <button class="btn" id="btn-empezar">Continuar</button>
-    <div class="nota"><b>No escribas nombres.</b> El código sirve para volver a encontrar la grabación sin
-    identificar a nadie. Todo queda en este teléfono.</div>
+    <div class="nota"><b>El nombre no viaja con la grabación.</b> El paquete que se envía lleva el
+    código y nunca el nombre. La correspondencia entre los dos queda en esta tablet y sale solo en
+    la planilla de la escuela, que es para ustedes.</div>
   </div>
 
   <!-- 2. grabar -->
@@ -310,8 +324,11 @@ a{color:var(--teal)}
     <div class="fila" style="margin-top:14px">
       <button class="btn chico" id="btn-enviar">Enviar el paquete</button>
       <button class="btn claro chico" id="btn-zip">Guardar el archivo</button>
-      <button class="btn claro chico" id="btn-csv">Solo la planilla</button>
+      <button class="btn claro chico" id="btn-planilla">Planilla de la escuela</button>
     </div>
+    <div class="pie" id="pie-planilla">La <b>planilla de la escuela</b> es para ustedes: lleva el
+    nombre de cada estudiante y su resultado, y <b>no lleva audio</b>. El paquete de grabaciones
+    nunca lleva nombres. Son dos archivos distintos y van a dos lugares distintos.</div>
     <div class="pie" id="pie-enviar">«Enviar» abre la hoja de compartir del teléfono: de ahí sale por
     WhatsApp, correo o Drive, sin pasar por ningún servidor nuestro. «Guardar» baja el mismo archivo
     a este equipo.</div>
@@ -327,10 +344,16 @@ a{color:var(--teal)}
 
 <script type="module">
 import { cargarModelo, evaluarTarea, Op } from "./motor.js";
-import { guardar, listar, borrarTodo, paqueteParaEntregar, pedirPersistencia, espacio }
-  from "./archivo.js";
+import { guardar, listar, borrarTodo, paqueteParaEntregar, pedirPersistencia, espacio,
+         anotarEstudiante, estudiantes, planillaDeLaEscuela } from "./archivo.js";
 
 const $ = s => document.querySelector(s);
+
+/* El nombre del estudiante lo escribe una persona y se pinta con innerHTML.
+   Un apellido con un `<` romperia la tabla, y algo peor escrito a proposito haria algo
+   peor. Todo lo que venga de un campo de texto pasa por aca antes de entrar al HTML. */
+const esc = t => String(t).replace(/[&<>"']/g,
+  c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLAVE = "fluidez.registros.v1";
 const CLAVE_JORNADA = "fluidez.jornada.v1";
 
@@ -351,6 +374,8 @@ function mostrarJornada(){
     $("#j-evaluador").value = jornada.evaluador;
     $("#j-escuela").value = jornada.escuela;
     $("#j-region").value = jornada.region;
+    $("#j-dispositivo").value = jornada.dispositivo ?? "A";
+    $("#j-seccion").value = jornada.seccion ?? "";
     $("#j-grado").value = jornada.grado;
     $("#j-consent").checked = true;
   }
@@ -399,6 +424,11 @@ $("#btn-jornada").onclick = async () => {
     evaluador: $("#j-evaluador").value.trim() || "sin indicar",
     escuela: $("#j-escuela").value.trim() || "sin indicar",
     region: $("#j-region").value.trim() || "sin indicar",
+    /* La letra de la tablet se antepone a cada codigo. Es lo que hace que dos evaluadores
+       que empiecen los dos en 014 no produzcan el mismo codigo, que era un problema que
+       hasta ahora prevenia solamente una convencion escrita en un documento. */
+    dispositivo: ($("#j-dispositivo").value.trim() || "A").replace(/[^\w-]+/g, "").toUpperCase(),
+    seccion: $("#j-seccion").value.trim(),
     grado: $("#j-grado").value,
     consentimiento: true,
     inicio: new Date().toISOString(),
@@ -483,9 +513,34 @@ async function cargarEstimulos(){
 }
 
 /* ---------------- paso 1 ---------------- */
-$("#btn-empezar").onclick = () => {
-  const cod = $("#codigo").value.trim();
+/* EL CODIGO LLEVA LA LETRA DE LA TABLET ADELANTE.
+ *
+ * Dos evaluadores que empiezan los dos en 014 producian el mismo codigo, y al juntar los
+ * paquetes de varias tablets no habia forma de saber cual era cual. Hasta ahora eso lo
+ * prevenia una convencion escrita en la guia de campo, o sea nada. */
+function codigoCompleto(){
+  const escrito = $("#codigo").value.trim();
+  if (!escrito) return "";
+  const letra = jornada?.dispositivo || "A";
+  return escrito.toUpperCase().startsWith(letra + "-") ? escrito : `${letra}-${escrito}`;
+}
+
+async function verCodigo(){
+  const cod = codigoCompleto();
+  $("#vista-codigo").innerHTML = cod
+    ? `Se va a guardar como <b>${esc(cod)}</b>` : "";
+  if (!cod) { $("#vista-nombre").textContent = ""; return; }
+  const anotado = (await estudiantes()).get(cod);
+  if (anotado && !$("#nombre").value.trim()) $("#nombre").value = anotado.nombre;
+  $("#vista-nombre").textContent = anotado
+    ? `Ya estaba anotado como ${anotado.nombre}.` : "";
+}
+$("#codigo").oninput = verCodigo;
+
+$("#btn-empezar").onclick = async () => {
+  const cod = codigoCompleto();
   if (!cod) { $("#codigo").focus(); return; }
+  await anotarEstudiante(cod, $("#nombre").value, jornada?.seccion ?? "");
   actual = estimulos.find(e => e.id === $("#sel").value);
   $("#est-cabecera").textContent = cod;
   $("#titulo-prueba").textContent = NOMBRE[actual.tarea];
@@ -865,11 +920,17 @@ async function pintarRegistros(){
     $("#tabla-registros").innerHTML = '<div class="vacio">Las aplicaciones que guardes aparecen acá.</div>';
     return;
   }
-  $("#tabla-registros").innerHTML = "<table>" + todos.slice(0, 12).map(r => `
-    <tr><td><b>${r.codigo}</b><br><span style="font-size:11.5px;color:var(--muted)">
-      ${new Date(r.fecha).toLocaleString("es")}</span></td>
+  /* El nombre sale de la lista del aula, que vive en otro almacen y NUNCA en la toma.
+     Se muestra acá porque el docente que tomo la prueba necesita saber a quien vio. */
+  const lista = await estudiantes();
+  $("#tabla-registros").innerHTML = "<table>" + todos.slice(0, 12).map(r => {
+    const quien = lista.get(r.codigo)?.nombre;
+    return `
+    <tr><td><b>${esc(quien || r.codigo)}</b><br><span style="font-size:11.5px;color:var(--muted)">
+      ${quien ? esc(r.codigo) + " &middot; " : ""}${new Date(r.fecha).toLocaleString("es")}</span></td>
       <td class="n">${r.pcpm_humano} ppm</td>
-      <td style="font-size:12px;color:var(--muted)">${r.correcciones} corr.</td></tr>`).join("") + "</table>";
+      <td style="font-size:12px;color:var(--muted)">${r.correcciones} corr.</td></tr>`;
+  }).join("") + "</table>";
 }
 
 function bajar(nombre, texto, tipo){
@@ -878,16 +939,24 @@ function bajar(nombre, texto, tipo){
   a.download = nombre; a.click(); URL.revokeObjectURL(a.href);
 }
 
-$("#btn-csv").onclick = async () => {
-  const todos = await listar();
-  if (!todos.length) return;
-  const cols = ["codigo","estimulo","tarea","modo","fecha","duracion","segundos","pcpm_humano",
-                "correctas_humano","estado_humano","pcpm_maquina","correctas_maquina",
-                "estado_maquina","correcciones"];
-  const csv = [cols.join(",")].concat(
-    todos.map(r => cols.map(c => JSON.stringify(r[c] ?? "")).join(","))).join("\n");
-  bajar("fluidez.csv", csv, "text/csv");
-};
+/* LA PLANILLA DE LA ESCUELA: el otro lado del trato.
+ *
+ * El paquete de grabaciones no lleva nombres nunca, porque va a entrenar un modelo y para
+ * eso el nombre no sirve para nada. Esta planilla los lleva siempre, porque es para el
+ * docente que tomo la prueba y que el lunes tiene que saber a quien acompaniar. Dos
+ * archivos, dos botones, dos destinos, y ninguno hace el trabajo del otro.
+ *
+ * No lleva audio a proposito: es una planilla para abrir y leer, no un archivo que haya que
+ * cuidar como si fuera voz de un menor. */
+$("#btn-planilla").onclick = () => conBoton($("#btn-planilla"), "Armando la planilla...", async () => {
+  const { csv, filas, conNombre } = await planillaDeLaEscuela();
+  if (!filas) return "Todavía no hay nada que listar";
+  const escuela = (jornada?.escuela || "escuela").replace(/[^\w-]+/g, "_");
+  bajar(`planilla_${escuela}_${new Date().toISOString().slice(0, 10)}.csv`, csv, "text/csv");
+  return conNombre === filas
+    ? `${filas} filas, todas con nombre`
+    : `${filas} filas, ${filas - conNombre} sin nombre`;
+});
 
 /* El paquete: el audio, las etiquetas y un LEAME, en un solo archivo. Es lo que se entrega. */
 async function armarPaquete(){

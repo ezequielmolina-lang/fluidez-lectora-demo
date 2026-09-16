@@ -18,7 +18,7 @@
  */
 
 const BASE = "fluidez";
-const VERSION = 1;
+const VERSION = 2;
 
 function abrir() {
   return new Promise((resolve, reject) => {
@@ -27,6 +27,21 @@ function abrir() {
       const db = req.result;
       if (!db.objectStoreNames.contains("tomas")) db.createObjectStore("tomas", { keyPath: "id" });
       if (!db.objectStoreNames.contains("audio")) db.createObjectStore("audio");
+      /* LA LISTA DEL AULA: codigo -> nombre. Version 2.
+       *
+       * POR QUE EXISTE, si la app dice "no escribas nombres": porque sin esto la
+       * herramienta no le sirve a la escuela. Le devuelve "AS2B-014 leyo 38 ppm" y alguien
+       * tiene que ir a buscar en un papel quien es AS2B-014. El docente que tomo la prueba
+       * necesita ver el nombre; el que entrena el modelo no lo necesita nunca.
+       *
+       * POR QUE EN UN ALMACEN APARTE Y NO COMO UN CAMPO DE LA TOMA: para que sea imposible
+       * que se filtre. `paqueteParaEntregar()` lee `tomas`, y `tomas` no tiene nombres. No
+       * hay una lista de columnas que alguien pueda actualizar mal: el dato no esta ahi.
+       * Los nombres solo salen por `planillaDeLaEscuela()`, que es otro boton, con otra
+       * advertencia, y que NO lleva audio. */
+      if (!db.objectStoreNames.contains("estudiantes")) {
+        db.createObjectStore("estudiantes", { keyPath: "codigo" });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -100,11 +115,64 @@ export async function audioDe(id) {
 
 export async function borrarTodo() {
   const db = await abrir();
-  await trans(db, ["tomas", "audio"], "readwrite", (t) => {
+  await trans(db, ["tomas", "audio", "estudiantes"], "readwrite", (t) => {
     t.objectStore("tomas").clear();
     t.objectStore("audio").clear();
+    t.objectStore("estudiantes").clear();
   });
   db.close();
+}
+
+/* ------------------------------------------------------- la lista del aula */
+
+export async function anotarEstudiante(codigo, nombre, seccion = "") {
+  const db = await abrir();
+  await trans(db, ["estudiantes"], "readwrite", (t) => {
+    const almacen = t.objectStore("estudiantes");
+    if (nombre.trim()) almacen.put({ codigo, nombre: nombre.trim(), seccion: seccion.trim() });
+    else almacen.delete(codigo);   // borrar el nombre es una forma legitima de corregirse
+  });
+  db.close();
+}
+
+export async function estudiantes() {
+  const db = await abrir();
+  const lista = await new Promise((resolve, reject) => {
+    const req = db.transaction("estudiantes").objectStore("estudiantes").getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  db.close();
+  return new Map(lista.map((e) => [e.codigo, e]));
+}
+
+export async function borrarLaLista() {
+  const db = await abrir();
+  await trans(db, ["estudiantes"], "readwrite", (t) => t.objectStore("estudiantes").clear());
+  db.close();
+}
+
+/* La planilla PARA LA ESCUELA: con nombres, sin audio, y sin salir de acá por accidente.
+ *
+ * Es el otro lado del trato. El paquete de entrenamiento no lleva nombres nunca; esta
+ * planilla los lleva siempre, porque es para el docente que tomo la prueba y que necesita
+ * saber a quien acompaniar el lunes. Son dos archivos, dos botones y dos destinos. */
+export async function planillaDeLaEscuela() {
+  const [tomas, lista] = await Promise.all([listar(), estudiantes()]);
+  const cols = ["nombre", "seccion", "codigo", "estimulo", "tarea", "fecha",
+                "pcpm_humano", "correctas_humano", "estado_humano", "grado", "escuela",
+                "lengua_materna", "evaluador"];
+  const filas = tomas.map((t) => {
+    const e = lista.get(t.codigo);
+    return { ...t, nombre: e?.nombre ?? "", seccion: e?.seccion ?? "" };
+  });
+  // Por nombre, que es como la va a leer una persona, y los sin nombre al final.
+  filas.sort((a, b) => (a.nombre || "￿").localeCompare(b.nombre || "￿", "es")
+                       || a.codigo.localeCompare(b.codigo, "es"));
+  const csv = [cols.join(",")].concat(
+    filas.map((f) => cols.map((c) => JSON.stringify(f[c] ?? "")).join(","))
+  ).join("\n");
+  return { csv, filas: filas.length, conNombre: filas.filter((f) => f.nombre).length };
 }
 
 /* ---------------------------------------------------------------- el zip, a mano */
