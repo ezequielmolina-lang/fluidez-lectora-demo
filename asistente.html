@@ -308,11 +308,15 @@ a{color:var(--teal)}
     <h2 id="titulo-registros">Todavía no hay ninguno</h2>
     <div id="tabla-registros"><div class="vacio">Las aplicaciones que guardes aparecen acá.</div></div>
     <div class="fila" style="margin-top:14px">
-      <button class="btn chico" id="btn-zip">Exportar el paquete</button>
+      <button class="btn chico" id="btn-enviar">Enviar el paquete</button>
+      <button class="btn claro chico" id="btn-zip">Guardar el archivo</button>
       <button class="btn claro chico" id="btn-csv">Solo la planilla</button>
     </div>
-    <div class="pie">El audio y los datos quedan <b>solo en este teléfono</b>. Nada se sube a ningún servidor.
-    Exportá antes de borrar el navegador o cambiar de equipo.</div>
+    <div class="pie" id="pie-enviar">«Enviar» abre la hoja de compartir del teléfono: de ahí sale por
+    WhatsApp, correo o Drive, sin pasar por ningún servidor nuestro. «Guardar» baja el mismo archivo
+    a este equipo.</div>
+    <div class="pie">El audio y los datos quedan <b>solo en este teléfono</b> hasta que vos los mandes.
+    Nada se sube solo. Exportá antes de borrar el navegador o cambiar de equipo.</div>
   </div>
 
   <p class="pie">Cada corrección que hacés queda registrada junto a lo que había dicho la máquina. Eso es lo
@@ -876,31 +880,102 @@ $("#btn-csv").onclick = async () => {
 };
 
 /* El paquete: el audio, las etiquetas y un LEAME, en un solo archivo. Es lo que se entrega. */
-$("#btn-zip").onclick = async () => {
-  const b = $("#btn-zip");
+async function armarPaquete(){
+  const { zip, tomas, conAudio } = await paqueteParaEntregar();
+  const fecha = new Date().toISOString().slice(0, 10);
+  const escuela = (jornada?.escuela || "escuela").replace(/[^\w-]+/g, "_");
+  return { zip, tomas, conAudio, nombre: `fluidez_${escuela}_${fecha}.zip` };
+}
+
+function guardarArchivo(zip, nombre){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(zip);
+  a.download = nombre; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+const AVISO_COPIA = "<b>Guardá el archivo antes de borrar nada.</b> " +
+  "Mientras no lo copies a otro lado, las grabaciones viven solo en este dispositivo.";
+
+/* Corre la exportacion y deja el boton contando lo que paso, en vez de no decir nada. */
+async function conBoton(b, trabajando, fn){
   const antes = b.textContent;
-  b.disabled = true; b.textContent = "Armando el paquete...";
+  b.disabled = true; b.textContent = trabajando;
   try {
-    const { zip, tomas, conAudio } = await paqueteParaEntregar();
-    if (!tomas) { b.textContent = "Todavía no hay nada que exportar"; return; }
-    const fecha = new Date().toISOString().slice(0, 10);
-    const nombre = `fluidez_${(jornada?.escuela || "escuela").replace(/[^\w-]+/g, "_")}_${fecha}.zip`;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(zip);
-    a.download = nombre; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    b.textContent = `${tomas} tomas, ${conAudio} con audio`;
-    $("#aviso-espacio").innerHTML = "<b>Guardá el archivo antes de borrar nada.</b> " +
-      "Mientras no lo copies a otro lado, las grabaciones viven solo en este dispositivo.";
+    const mensaje = await fn();
+    if (mensaje) b.textContent = mensaje;
   } catch (err) {
     b.textContent = "No se pudo: " + err.message;
   } finally {
     b.disabled = false;
     setTimeout(() => { b.textContent = antes; }, 6000);
   }
-};
+}
+
+$("#btn-zip").onclick = () => conBoton($("#btn-zip"), "Armando el paquete...", async () => {
+  const { zip, tomas, conAudio, nombre } = await armarPaquete();
+  if (!tomas) return "Todavía no hay nada que exportar";
+  guardarArchivo(zip, nombre);
+  $("#aviso-espacio").innerHTML = AVISO_COPIA;
+  return `${tomas} tomas, ${conAudio} con audio`;
+});
+
+/* ENVIAR: la hoja de compartir del propio telefono.
+ *
+ * POR QUE ASI Y NO SUBIENDOLO A UN SERVIDOR: esto es voz de menores. Un boton que la sube
+ * sola a algun lado convierte una decision institucional (donde se guarda, quien accede,
+ * cuanto tiempo) en un detalle de implementacion que nadie miro. Con la hoja de compartir,
+ * el que aprieta el boton VE a donde lo manda y lo elige. Y de paso no hace falta ningun
+ * servidor, que es lo que permite que esto siga siendo gratis y funcione sin señal hasta el
+ * momento de mandarlo.
+ *
+ * POR QUE CAE AL ARCHIVO SI FALLA: navigator.share con archivos no existe en escritorio ni
+ * en navegadores viejos, y en iPhone ademas exige que la llamada pase cerca del toque del
+ * usuario, cosa que armar el zip puede arruinar. En todos esos casos el paquete se baja
+ * igual, que era lo que hacia antes, y el boton lo dice. */
+$("#btn-enviar").onclick = () => conBoton($("#btn-enviar"), "Armando el paquete...", async () => {
+  const { zip, tomas, conAudio, nombre } = await armarPaquete();
+  if (!tomas) return "Todavía no hay nada que enviar";
+
+  const archivo = new File([zip], nombre, { type: "application/zip" });
+  // Las partes se arman y se juntan: interpolar una jornada sin escuela dejaba ". ." suelto.
+  const partes = [
+    `Fluidez lectora: ${tomas === 1 ? "1 toma" : tomas + " tomas"}, ${conAudio} con audio`,
+    [jornada?.escuela, jornada?.region, jornada?.grado].filter(Boolean).join(", "),
+    "Sin nombres de estudiantes: la planilla de códigos queda en la escuela",
+  ].filter(Boolean);
+  const datos = { files: [archivo], title: nombre, text: partes.join(". ") + "." };
+
+  if (navigator.canShare?.(datos)) {
+    try {
+      await navigator.share(datos);
+      $("#aviso-espacio").innerHTML = AVISO_COPIA;
+      return `Enviado: ${tomas} tomas`;
+    } catch (err) {
+      // El usuario cerro la hoja de compartir. No es un error y no hay que bajar nada.
+      if (err.name === "AbortError") return "Envío cancelado";
+    }
+  }
+  guardarArchivo(zip, nombre);
+  $("#aviso-espacio").innerHTML = AVISO_COPIA;
+  return "Este equipo no comparte: se bajó el archivo";
+});
 
 /* ---------------- arranque ---------------- */
+
+/* Un boton que promete compartir y despues baja un archivo es peor que no tenerlo.
+ *
+ * En escritorio y en navegadores viejos no existe compartir archivos, asi que ahi el boton
+ * no se muestra y "Guardar el archivo" pasa a ser el principal. La prueba se hace con un
+ * File de verdad, porque hay navegadores con navigator.share que NO aceptan archivos. */
+if (!navigator.canShare?.({ files: [new File([""], "p.zip", { type: "application/zip" })] })) {
+  $("#btn-enviar").classList.add("oculto");
+  $("#btn-zip").classList.remove("claro");
+  $("#pie-enviar").textContent =
+    "Este equipo no puede compartir archivos, así que el paquete se baja acá. " +
+    "Desde un celular aparece además el botón para enviarlo directo por WhatsApp o correo.";
+}
+
 await cargarEstimulos();
 mostrarJornada();
 await pintarRegistros();
