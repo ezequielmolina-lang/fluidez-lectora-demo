@@ -600,9 +600,8 @@ async function cargarEstimulos(){
        repositorio en Windows y desde el sitio publicado tiene los mismos estimulos y
        distintos bytes, y daba dos huellas distintas para el mismo material. La huella tiene
        que identificar QUE se midio, no de donde se sirvio. */
-    const plano = texto.replace(/
-/g, "
-");
+    const plano = texto.replace(new RegExp(String.fromCharCode(13, 10), "g"),
+                                String.fromCharCode(10));
     const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(plano));
     huellaEstimulos = [...new Uint8Array(h)].slice(0, 4)
       .map(b => b.toString(16).padStart(2, "0")).join("");
