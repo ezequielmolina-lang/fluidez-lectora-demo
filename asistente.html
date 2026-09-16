@@ -328,6 +328,8 @@ a{color:var(--teal)}
       <button class="btn claro chico" id="btn-zip">Guardar el archivo</button>
       <button class="btn claro chico" id="btn-planilla">Planilla de la escuela</button>
     </div>
+    <div class="nota oculto" id="aviso-paquete"></div>
+    <div class="pie" id="pie-espacio"></div>
     <div class="pie" id="pie-planilla">La <b>planilla de la escuela</b> es para ustedes: lleva el
     nombre de cada estudiante y su resultado, y <b>no lleva audio</b>. El paquete de grabaciones
     nunca lleva nombres. Son dos archivos distintos y van a dos lugares distintos.</div>
@@ -1018,8 +1020,12 @@ function volverAlInicio(){
 
 async function pintarRegistros(){
   const todos = await listar();
+  /* El espacio ocupado va al pie del panel de guardados, que se ve siempre. Estaba en el
+     paso 0, que se oculta al empezar la jornada, o sea que el unico momento en que importaba
+     era el unico en que no se veia. La guia de campo dice "la pantalla muestra los MB
+     usados": recien ahora es cierto. */
   const e = await espacio();
-  if (e) $("#aviso-espacio").textContent =
+  if (e) $("#pie-espacio").textContent =
     `Ocupado en este dispositivo: ${e.usadoMB.toFixed(1)} MB de ${Math.round(e.totalMB)} MB disponibles.`;
   $("#titulo-registros").textContent = todos.length
     ? todos.length + (todos.length === 1 ? " aplicación guardada" : " aplicaciones guardadas")
@@ -1081,8 +1087,33 @@ function guardarArchivo(zip, nombre){
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 
-const AVISO_COPIA = "<b>Guardá el archivo antes de borrar nada.</b> " +
-  "Mientras no lo copies a otro lado, las grabaciones viven solo en este dispositivo.";
+/* QUE PASO Y QUE HAY QUE HACER AHORA.
+ *
+ * El aviso decia "guardá el archivo antes de borrar nada", que es cierto y no sirve: no dice
+ * donde quedo el archivo ni cual es el paso siguiente. La primera persona que lo uso apreto
+ * el boton y pregunto "¿y despues que?". Un evaluador al final de una jornada va a preguntar
+ * lo mismo, con la diferencia de que no va a tener a quien preguntarle. */
+const yaQue = (nombre) => `<b>Se bajó <code>${nombre}</code></b> a la carpeta de descargas de ` +
+  "este equipo. <b>Ahora hay que mandarlo</b>: adjuntalo a un correo o subilo a Drive. " +
+  "Hasta que no esté copiado a otro lado, las grabaciones viven solo acá.";
+
+/* POR QUE NO SE ESCRIBE EN #aviso-espacio.
+ *
+ * Ese elemento vive dentro del paso 0, que se OCULTA apenas empieza la jornada. Todo lo que
+ * la aplicacion le contestaba al evaluador despues de exportar, y el aviso de cuanto espacio
+ * queda, se escribia ahi y no se veia nunca: medido con getComputedStyle, el elemento tenia
+ * el texto correcto y cero pixeles de alto. Es el mismo defecto que el de la clase `.oculto`
+ * en setiembre, y se encuentra igual: mirando lo que se ve y no lo que dice el codigo.
+ *
+ * El panel de guardados no se oculta nunca, asi que los avisos van ahi. */
+function avisar(html){
+  const a = $("#aviso-paquete");
+  a.innerHTML = html;
+  a.classList.remove("oculto");
+}
+
+const AVISO_ENVIADO = "<b>Paquete enviado.</b> Igual conviene confirmar que llegó antes de " +
+  "borrar los datos de este equipo.";
 
 /* Corre la exportacion y deja el boton contando lo que paso, en vez de no decir nada. */
 async function conBoton(b, trabajando, fn){
@@ -1103,7 +1134,7 @@ $("#btn-zip").onclick = () => conBoton($("#btn-zip"), "Armando el paquete...", a
   const { zip, tomas, conAudio, nombre } = await armarPaquete();
   if (!tomas) return "Todavía no hay nada que exportar";
   guardarArchivo(zip, nombre);
-  $("#aviso-espacio").innerHTML = AVISO_COPIA;
+  avisar(yaQue(nombre));
   return `${tomas} tomas, ${conAudio} con audio`;
 });
 
@@ -1139,7 +1170,7 @@ $("#btn-enviar").onclick = () => conBoton($("#btn-enviar"), "Armando el paquete.
   if (navigator.canShare?.(datos)) {
     try {
       await navigator.share(datos);
-      $("#aviso-espacio").innerHTML = AVISO_COPIA;
+      avisar(AVISO_ENVIADO);
       return `Enviado: ${tomas} tomas`;
     } catch (err) {
       // El usuario cerro la hoja de compartir. No es un error y no hay que bajar nada.
@@ -1147,7 +1178,7 @@ $("#btn-enviar").onclick = () => conBoton($("#btn-enviar"), "Armando el paquete.
     }
   }
   guardarArchivo(zip, nombre);
-  $("#aviso-espacio").innerHTML = AVISO_COPIA;
+  avisar(yaQue(nombre));
   return "Este equipo no comparte: se bajó el archivo";
 });
 
