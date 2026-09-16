@@ -62,7 +62,8 @@ input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
 .reloj small{font:400 14px var(--sans);color:var(--muted)}
 .aviso{font-size:13.5px;color:var(--muted);text-align:center;margin-bottom:12px}
 .barra{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:12px}
-#barra-in{height:100%;width:0;background:var(--teal);transition:width .25s}
+#barra-in,#barra0-in{height:100%;width:0;background:var(--teal);transition:width .25s}
+.barra{margin-bottom:4px}
 
 /* el pasaje, tocable */
 .pasaje{font:21px/2.05 var(--sans);margin:4px 0 14px}
@@ -195,14 +196,67 @@ a{color:var(--teal)}
 
 <div class="wrap">
 
+  <!-- 0. la jornada: se llena una vez por dia y viaja con cada toma -->
+  <div class="paso" id="paso0">
+    <span class="num">Antes de empezar</span>
+    <h2>Datos de la jornada</h2>
+    <p style="font-size:14px;margin-bottom:12px">Se completa <b>una sola vez</b> y queda pegado a cada
+    grabación. Sin esto el audio sirve para entrenar pero <b>no para comprobar que el sistema no
+    discrimina</b>, que es la pregunta que más importa.</p>
+
+    <label for="j-evaluador">Quién toma la prueba (iniciales, no el nombre)</label>
+    <input id="j-evaluador" autocomplete="off" placeholder="ej. MQ">
+    <label for="j-escuela">Escuela (código o nombre corto)</label>
+    <input id="j-escuela" autocomplete="off" placeholder="ej. IE 80017 Ascope">
+    <label for="j-region">Región</label>
+    <input id="j-region" autocomplete="off" placeholder="ej. La Libertad">
+    <label for="j-grado">Grado</label>
+    <select id="j-grado">
+      <option value="1">1.º de primaria</option>
+      <option value="2" selected>2.º de primaria</option>
+      <option value="3">3.º de primaria</option>
+      <option value="4">4.º de primaria</option>
+      <option value="5">5.º de primaria</option>
+      <option value="6">6.º de primaria</option>
+      <option value="7">1.º de secundaria</option>
+      <option value="8">2.º de secundaria</option>
+      <option value="9">3.º de secundaria</option>
+      <option value="10">4.º o 5.º de secundaria</option>
+    </select>
+
+    <div class="nota" style="margin-bottom:12px"><label style="display:flex;gap:10px;align-items:flex-start;
+      color:var(--body);font-size:13.5px;margin:0;cursor:pointer">
+      <input type="checkbox" id="j-consent" style="width:auto;margin:2px 0 0">
+      <span><b>Confirmo que hay consentimiento del apoderado</b> para grabar la voz de cada estudiante,
+      y que <b>no voy a escribir nombres</b> en esta aplicación.</span></label></div>
+
+    <button class="btn" id="btn-jornada">Empezar la jornada</button>
+    <button class="btn claro chico" id="btn-preparar" style="margin-top:10px">Preparar el equipo</button>
+    <div class="barra oculto" id="barra0"><div id="barra0-in"></div></div>
+    <div class="nota" id="aviso-espacio"></div>
+  </div>
+
   <!-- 1. quien y que -->
-  <div class="paso" id="paso1">
+  <div class="paso oculto" id="paso1">
     <span class="num">Paso 1</span>
     <h2>¿A quién y qué se le toma?</h2>
     <label for="codigo">Código del estudiante (sin nombres)</label>
     <input id="codigo" inputmode="text" autocomplete="off" placeholder="ej. 2B-014">
+    <label for="lengua">Lengua materna del estudiante</label>
+    <select id="lengua">
+      <option value="castellano">Castellano</option>
+      <option value="quechua">Quechua</option>
+      <option value="aimara">Aimara</option>
+      <option value="amazonica">Lengua amazónica</option>
+      <option value="otra">Otra</option>
+      <option value="no_sabe">No sé</option>
+    </select>
     <label for="sel">Prueba</label>
     <select id="sel"></select>
+    <label style="display:flex;gap:9px;align-items:center;color:var(--body);font-size:14px;margin:2px 0 14px;cursor:pointer">
+      <input type="checkbox" id="ruido" style="width:auto;margin:0">
+      Hay ruido de fondo ahora mismo
+    </label>
     <button class="btn" id="btn-empezar">Continuar</button>
     <div class="nota"><b>No escribas nombres.</b> El código sirve para volver a encontrar la grabación sin
     identificar a nadie. Todo queda en este teléfono.</div>
@@ -254,8 +308,8 @@ a{color:var(--teal)}
     <h2 id="titulo-registros">Todavía no hay ninguno</h2>
     <div id="tabla-registros"><div class="vacio">Las aplicaciones que guardes aparecen acá.</div></div>
     <div class="fila" style="margin-top:14px">
-      <button class="btn claro chico" id="btn-csv">Exportar CSV</button>
-      <button class="btn claro chico" id="btn-json">Exportar todo</button>
+      <button class="btn chico" id="btn-zip">Exportar el paquete</button>
+      <button class="btn claro chico" id="btn-csv">Solo la planilla</button>
     </div>
     <div class="pie">El audio y los datos quedan <b>solo en este teléfono</b>. Nada se sube a ningún servidor.
     Exportá antes de borrar el navegador o cambiar de equipo.</div>
@@ -269,9 +323,87 @@ a{color:var(--teal)}
 
 <script type="module">
 import { cargarModelo, evaluarTarea, Op } from "./motor.js";
+import { guardar, listar, borrarTodo, paqueteParaEntregar, pedirPersistencia, espacio }
+  from "./archivo.js";
 
 const $ = s => document.querySelector(s);
 const CLAVE = "fluidez.registros.v1";
+const CLAVE_JORNADA = "fluidez.jornada.v1";
+
+/* LA JORNADA: se completa una vez y viaja pegada a cada toma.
+ *
+ * No es burocracia. Sin region y sin lengua materna, el audio sirve para entrenar y NO sirve
+ * para contestar la pregunta que mas importa, que es si el sistema penaliza a los hablantes
+ * de quechua o aimara. Esa comprobacion se hace comparando grupos, y un grupo que no esta
+ * registrado no se puede comparar. */
+let jornada = null;
+try { jornada = JSON.parse(localStorage.getItem(CLAVE_JORNADA)); } catch {}
+
+function mostrarJornada(){
+  const hay = jornada && jornada.consentimiento;
+  $("#paso0").classList.toggle("oculto", !!hay);
+  $("#paso1").classList.toggle("oculto", !hay);
+  if (hay) {
+    $("#j-evaluador").value = jornada.evaluador;
+    $("#j-escuela").value = jornada.escuela;
+    $("#j-region").value = jornada.region;
+    $("#j-grado").value = jornada.grado;
+    $("#j-consent").checked = true;
+  }
+}
+
+/* PREPARAR EL EQUIPO, que en campo es lo que decide si el dia sirve o no.
+ *
+ * El reconocedor pesa decenas de megas y se baja una sola vez. Si eso pasa reciBIENdo al
+ * primer chico en una escuela sin señal, no pasa: el evaluador se queda mirando una barra que
+ * no avanza, con el aula armada y los chicos esperando. Se baja ANTES, donde haya wifi, y la
+ * app dice explicitamente que ya esta listo. */
+$("#btn-preparar").onclick = async () => {
+  const b = $("#btn-preparar");
+  b.disabled = true; b.textContent = "Descargando el reconocedor...";
+  $("#barra0").classList.remove("oculto");
+  const vistos = {};
+  try {
+    await cargarModelo(p => {
+      if (p.status === "progress" && p.file) {
+        vistos[p.file] = p.progress || 0;
+        const v = Object.values(vistos);
+        $("#barra0-in").style.width = (v.reduce((a, c) => a + c, 0) / v.length) + "%";
+      }
+    });
+    modeloListo = Promise.resolve();
+    b.textContent = "Equipo listo, ya funciona sin señal";
+    $("#aviso-espacio").innerHTML = "<b>Listo.</b> El reconocedor quedó guardado en este " +
+      "dispositivo. De acá en adelante la aplicación funciona <b>sin internet</b>.";
+  } catch (e) {
+    b.disabled = false;
+    b.textContent = "No se pudo descargar, probá con señal";
+    $("#aviso-espacio").innerHTML = "<b>No se descargó el reconocedor:</b> " + e.message +
+      ". Conviene resolverlo <b>antes</b> de ir a la escuela.";
+  } finally {
+    $("#barra0").classList.add("oculto");
+  }
+};
+
+$("#btn-jornada").onclick = async () => {
+  if (!$("#j-consent").checked) {
+    $("#aviso-espacio").innerHTML =
+      "<b>Falta confirmar el consentimiento.</b> Sin eso no se puede grabar a un menor.";
+    return;
+  }
+  jornada = {
+    evaluador: $("#j-evaluador").value.trim() || "sin indicar",
+    escuela: $("#j-escuela").value.trim() || "sin indicar",
+    region: $("#j-region").value.trim() || "sin indicar",
+    grado: $("#j-grado").value,
+    consentimiento: true,
+    inicio: new Date().toISOString(),
+  };
+  try { localStorage.setItem(CLAVE_JORNADA, JSON.stringify(jornada)); } catch {}
+  await pedirPersistencia();
+  mostrarJornada();
+  $("#codigo").focus();
+};
 
 let estimulos = [], actual = null, rec = null, trozos = [], t0 = 0, tick = null;
 let modeloListo = null, resultado = null, marcas = [], marcasMaquina = [], audioBlob = null;
@@ -532,6 +664,21 @@ function reloj(){
 
 /* Modo demostracion: ?demo=1 usa la grabacion de ejemplo en vez del microfono. Sirve para
  * mostrar el flujo entero sin grabar a nadie, y para probar la app sin microfono. */
+/* EL FORMATO DE GRABACION NO ES EL MISMO EN TODOS LOS TELEFONOS, y darlo por sentado rompe
+ * el dato en silencio. Android graba webm con opus; un iPhone graba mp4 con aac. Si se
+ * escribe "audio/webm" a mano, en el iPhone el archivo SIGUE SIENDO mp4 y solo esta mal
+ * etiquetado: la app funciona igual, y quien reciba el paquete se encuentra con archivos que
+ * su herramienta rechaza o, peor, interpreta mal. Asi que se pregunta que sabe grabar el
+ * aparato y se guarda el tipo de verdad, con la extension que le corresponde. */
+const FORMATOS = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+const FORMATO = FORMATOS.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || "";
+
+const EXTENSIONES = { webm: "webm", mp4: "m4a", mpeg: "mp3", ogg: "ogg" };
+function extensionDe(tipo){
+  const m = /audio\/([a-z0-9]+)/i.exec(tipo || "");
+  return (m && EXTENSIONES[m[1].toLowerCase()]) || "bin";
+}
+
 const DEMO = new URLSearchParams(location.search).get("demo") === "1";
 if (DEMO) $("#aviso-grabar").textContent = "Modo demostración: usa una grabación de ejemplo.";
 
@@ -555,11 +702,11 @@ async function grabar(){
   catch (e) { $("#aviso-grabar").textContent = "No se pudo abrir el micrófono: " + e.message; return; }
   empezarDescarga();
   trozos = [];
-  rec = new MediaRecorder(stream);
+  rec = new MediaRecorder(stream, FORMATO ? { mimeType: FORMATO } : {});
   rec.ondataavailable = ev => trozos.push(ev.data);
   rec.onstop = async () => {
     stream.getTracks().forEach(t => t.stop());
-    audioBlob = new Blob(trozos, { type: "audio/webm" });
+    audioBlob = new Blob(trozos, { type: rec.mimeType || FORMATO || "audio/webm" });
     await procesar();
   };
   rec.start(); t0 = Date.now(); tick = setInterval(reloj, 100);
@@ -654,11 +801,26 @@ $("#btn-guardar").onclick = () => {
     humano: marcas.map(m => m ? 1 : 0).join(""),
     maquina: marcasMaquina.map(m => m ? 1 : 0).join(""),
   };
-  const todos = leer();
-  todos.unshift(reg);
-  localStorage.setItem(CLAVE, JSON.stringify(todos));
-  pintarRegistros();
-  volverAlInicio();
+  /* EL AUDIO SE GUARDA. Sin esto, una jornada entera de trabajo deja una planilla y ningun
+     dato de entrenamiento, que es justamente lo que el proyecto necesita. */
+  Object.assign(reg, {
+    archivo: `${reg.codigo}__${reg.estimulo}__${reg.id}.${extensionDe(audioBlob?.type)}`
+              .replace(/[^\w.-]+/g, "_"),
+    formato: audioBlob?.type || "",
+    escuela: jornada?.escuela ?? "", region: jornada?.region ?? "",
+    grado: jornada?.grado ?? "", evaluador: jornada?.evaluador ?? "",
+    lengua_materna: $("#lengua").value,
+    ruido: $("#ruido").checked ? "si" : "no",
+  });
+
+  $("#btn-guardar").disabled = true;
+  guardar(reg, audioBlob)
+    .then(async () => { await pintarRegistros(); volverAlInicio(); })
+    .catch(e => {
+      $("#pie-revisar").textContent = "NO SE PUDO GUARDAR: " + e.message +
+        ". No toques nada y avisá antes de seguir, para no perder la toma.";
+    })
+    .finally(() => { $("#btn-guardar").disabled = false; });
 };
 
 function volverAlInicio(){
@@ -676,10 +838,12 @@ function volverAlInicio(){
 }
 
 /* ---------------- registros ---------------- */
-const leer = () => { try { return JSON.parse(localStorage.getItem(CLAVE)) || []; } catch { return []; } };
 
-function pintarRegistros(){
-  const todos = leer();
+async function pintarRegistros(){
+  const todos = await listar();
+  const e = await espacio();
+  if (e) $("#aviso-espacio").textContent =
+    `Ocupado en este dispositivo: ${e.usadoMB.toFixed(1)} MB de ${Math.round(e.totalMB)} MB disponibles.`;
   $("#titulo-registros").textContent = todos.length
     ? todos.length + (todos.length === 1 ? " aplicación guardada" : " aplicaciones guardadas")
     : "Todavía no hay ninguno";
@@ -700,8 +864,8 @@ function bajar(nombre, texto, tipo){
   a.download = nombre; a.click(); URL.revokeObjectURL(a.href);
 }
 
-$("#btn-csv").onclick = () => {
-  const todos = leer();
+$("#btn-csv").onclick = async () => {
+  const todos = await listar();
   if (!todos.length) return;
   const cols = ["codigo","estimulo","tarea","modo","fecha","duracion","segundos","pcpm_humano",
                 "correctas_humano","estado_humano","pcpm_maquina","correctas_maquina",
@@ -711,15 +875,35 @@ $("#btn-csv").onclick = () => {
   bajar("fluidez.csv", csv, "text/csv");
 };
 
-$("#btn-json").onclick = () => {
-  const todos = leer();
-  if (!todos.length) return;
-  bajar("fluidez.json", JSON.stringify(todos, null, 1), "application/json");
+/* El paquete: el audio, las etiquetas y un LEAME, en un solo archivo. Es lo que se entrega. */
+$("#btn-zip").onclick = async () => {
+  const b = $("#btn-zip");
+  const antes = b.textContent;
+  b.disabled = true; b.textContent = "Armando el paquete...";
+  try {
+    const { zip, tomas, conAudio } = await paqueteParaEntregar();
+    if (!tomas) { b.textContent = "Todavía no hay nada que exportar"; return; }
+    const fecha = new Date().toISOString().slice(0, 10);
+    const nombre = `fluidez_${(jornada?.escuela || "escuela").replace(/[^\w-]+/g, "_")}_${fecha}.zip`;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(zip);
+    a.download = nombre; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    b.textContent = `${tomas} tomas, ${conAudio} con audio`;
+    $("#aviso-espacio").innerHTML = "<b>Guardá el archivo antes de borrar nada.</b> " +
+      "Mientras no lo copies a otro lado, las grabaciones viven solo en este dispositivo.";
+  } catch (err) {
+    b.textContent = "No se pudo: " + err.message;
+  } finally {
+    b.disabled = false;
+    setTimeout(() => { b.textContent = antes; }, 6000);
+  }
 };
 
 /* ---------------- arranque ---------------- */
 await cargarEstimulos();
-pintarRegistros();
+mostrarJornada();
+await pintarRegistros();
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js")
     .then(r => console.info("[asistente] sin conexión listo:", r.scope))
