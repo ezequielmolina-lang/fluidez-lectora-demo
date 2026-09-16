@@ -132,6 +132,15 @@ function fechaDos(d) {
   return { hora, fecha };
 }
 
+/* Bit 11 de las banderas: "el nombre de este archivo esta en UTF-8".
+ *
+ * Sin esto, la especificacion del zip dice que el nombre se lee como CP437, y los
+ * descompresores obedecen: un archivo llamado "nino.webm" con enie salia "ni├▒o.webm" al
+ * abrir el paquete. Los bytes del nombre SIEMPRE fueron UTF-8, lo que faltaba era
+ * declararlo. Lo encontro tests/test_zip_js.py, no una persona, y no se habia notado
+ * porque los codigos de estudiante que veniamos usando eran todos ASCII. */
+const NOMBRE_EN_UTF8 = 0x0800;
+
 export async function armarZip(archivos) {
   const cod = new TextEncoder();
   const partes = [];
@@ -147,7 +156,7 @@ export async function armarZip(archivos) {
     const local = new DataView(new ArrayBuffer(30));
     local.setUint32(0, 0x04034b50, true);
     local.setUint16(4, 20, true);       // version necesaria
-    local.setUint16(6, 0, true);        // banderas
+    local.setUint16(6, NOMBRE_EN_UTF8, true);
     local.setUint16(8, 0, true);        // metodo 0: guardado, sin comprimir
     local.setUint16(10, hora, true);
     local.setUint16(12, fecha, true);
@@ -162,7 +171,7 @@ export async function armarZip(archivos) {
     dir.setUint32(0, 0x02014b50, true);
     dir.setUint16(4, 20, true);
     dir.setUint16(6, 20, true);
-    dir.setUint16(8, 0, true);
+    dir.setUint16(8, NOMBRE_EN_UTF8, true);
     dir.setUint16(10, 0, true);
     dir.setUint16(12, hora, true);
     dir.setUint16(14, fecha, true);

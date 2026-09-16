@@ -941,7 +941,10 @@ $("#btn-enviar").onclick = () => conBoton($("#btn-enviar"), "Armando el paquete.
   // Las partes se arman y se juntan: interpolar una jornada sin escuela dejaba ". ." suelto.
   const partes = [
     `Fluidez lectora: ${tomas === 1 ? "1 toma" : tomas + " tomas"}, ${conAudio} con audio`,
-    [jornada?.escuela, jornada?.region, jornada?.grado].filter(Boolean).join(", "),
+    // El grado se guarda como numero ("2"), y suelto en el mensaje no se entiende.
+    [jornada?.escuela, jornada?.region,
+     jornada?.grado && [...$("#j-grado").options]
+       .find(o => o.value === jornada.grado)?.textContent].filter(Boolean).join(", "),
     "Sin nombres de estudiantes: la planilla de códigos queda en la escuela",
   ].filter(Boolean);
   const datos = { files: [archivo], title: nombre, text: partes.join(". ") + "." };
