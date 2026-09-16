@@ -247,7 +247,10 @@ a{color:var(--teal)}
 
     <button class="btn" id="btn-jornada">Empezar la jornada</button>
     <button class="btn claro chico" id="btn-preparar" style="margin-top:10px">Preparar el equipo</button>
+    <button class="btn claro chico" id="btn-instalar" style="margin-top:8px">Ponerla en la pantalla
+    de inicio</button>
     <div class="barra oculto" id="barra0"><div id="barra0-in"></div></div>
+    <div class="nota oculto" id="como-instalar"></div>
     <div class="nota" id="aviso-espacio"></div>
   </div>
 
@@ -350,6 +353,8 @@ a{color:var(--teal)}
   que permite medir después cuánto se equivoca, y mejorarla. &middot;
   <a href="./">Qué es esto y de dónde salen los números</a> &middot;
   <a href="https://github.com/ezequielmolina-lang/fluidez-lectora-demo" target="_blank" rel="noopener">el código</a></p>
+
+  <p class="pie" id="pie-version"></p>
 </div>
 
 <script type="module">
@@ -428,6 +433,73 @@ function mostrarJornada(){
  * primer chico en una escuela sin señal, no pasa: el evaluador se queda mirando una barra que
  * no avanza, con el aula armada y los chicos esperando. Se baja ANTES, donde haya wifi, y la
  * app dice explicitamente que ya esta listo. */
+/* PONERLA EN LA PANTALLA DE INICIO, con un solo toque donde se pueda.
+ *
+ * POR QUE EXISTE: la instruccion era "buscá en el menú de tu navegador la opción de agregar
+ * a la pantalla de inicio", y cada navegador la esconde en otro lado y la llama distinto. La
+ * primera persona que lo intento, en Brave de iPhone, no la encontro. Un evaluador tampoco
+ * la va a encontrar, y una aplicacion que se queda en una pestaña se pierde.
+ *
+ * En Android y en los navegadores de escritorio basados en Chromium el navegador avisa que
+ * la pagina se puede instalar (`beforeinstallprompt`), y ese aviso se puede guardar y
+ * disparar despues desde un boton: un toque y listo.
+ *
+ * EN iPHONE NO SE PUEDE, y no es un descuido: iOS no le da a ninguna pagina la posibilidad
+ * de instalarse sola. Ahi lo unico honesto es decir los pasos exactos. Y hay una trampa que
+ * cuesta una tarde si nadie la dice: en iPhone SOLO SAFARI puede agregar a la pantalla de
+ * inicio. Desde Brave o Chrome la opcion no esta, por mas que uno la busque. */
+let ofertaDeInstalar = null;
+addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();          // sin esto el navegador muestra su propia barra y se pierde
+  ofertaDeInstalar = e;
+  $("#btn-instalar").textContent = "Ponerla en la pantalla de inicio";
+});
+
+const yaInstalada = () =>
+  matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+
+function pasosParaInstalar(){
+  const ua = navigator.userAgent;
+  const esIOS = /iPad|iPhone|iPod/.test(ua) ||
+                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (esIOS) {
+    /* NO se distingue el navegador, a proposito. Brave y otros navegadores de iPhone copian
+       la cadena de identificacion de Safari por privacidad, asi que detectarlos es adivinar,
+       y adivinar mal significa darle al evaluador un paso que en su pantalla no existe. Lo
+       que se dice sirve en los dos casos: intenta, y si no esta, Safari. */
+    return "<b>En iPhone o iPad:</b> tocá el botón de compartir, el cuadradito con la flecha " +
+           "hacia arriba, bajá en la lista y elegí <b>«Agregar a inicio»</b>.<br><br>" +
+           "<b>Si esa opción no aparece</b>, es porque este navegador no la ofrece: iOS solo " +
+           "se la da a algunos. Abrí esta misma dirección en <b>Safari</b> y hacelo desde " +
+           "ahí. Es una restricción de iOS, no de la aplicación.";
+  }
+  if (/Android/.test(ua)) {
+    return "<b>En este teléfono o tablet:</b> abrí el menú del navegador, los tres puntos, y " +
+           "elegí <b>«Instalar aplicación»</b> o <b>«Agregar a la pantalla de inicio»</b>.";
+  }
+  return "<b>En esta computadora:</b> buscá el ícono de instalar en la barra de direcciones, " +
+         "a la derecha, o entrá al menú del navegador y elegí <b>«Instalar Fluidez lectora»</b>. " +
+         "Igual, para tomar la prueba conviene un celular o una tablet: es donde está el " +
+         "micrófono y donde el evaluador va a estar parado al lado del estudiante.";
+}
+
+$("#btn-instalar").onclick = async () => {
+  if (ofertaDeInstalar) {
+    ofertaDeInstalar.prompt();
+    const { outcome } = await ofertaDeInstalar.userChoice;
+    ofertaDeInstalar = null;
+    if (outcome === "accepted") {
+      $("#btn-instalar").classList.add("oculto");
+      $("#como-instalar").innerHTML = "<b>Listo.</b> Quedó en la pantalla de inicio. " +
+        "Abrila desde ahí de ahora en adelante.";
+      $("#como-instalar").classList.remove("oculto");
+    }
+    return;
+  }
+  $("#como-instalar").innerHTML = pasosParaInstalar();
+  $("#como-instalar").classList.remove("oculto");
+};
+
 $("#btn-preparar").onclick = async () => {
   const b = $("#btn-preparar");
   b.disabled = true; b.textContent = "Descargando el reconocedor...";
@@ -1204,6 +1276,34 @@ if (!navigator.canShare?.({ files: [new File([""], "p.zip", { type: "application
 }
 
 await cargarEstimulos();
+
+/* QUE VERSION TENGO, y como me traigo la nueva.
+ *
+ * POR QUE HACE FALTA: la aplicacion se actualiza sola en cuanto hay señal, porque el service
+ * worker pide primero a la red y usa el cache de respaldo. Pero desde afuera eso es
+ * invisible: no hay forma de saber si lo que uno tiene en la mano es lo ultimo o algo de la
+ * semana pasada, y "no se si ya esta grabada la version anterior" es exactamente la pregunta
+ * que no se podia contestar. El numero de version aparece abajo, y el enlace fuerza el
+ * chequeo para no tener que adivinar. */
+$("#pie-version").innerHTML =
+  `Versión ${VERSION_APP} · estímulos ${huellaEstimulos || "?"}` +
+  (yaInstalada() ? " · instalada en este equipo" : "") +
+  ` · <a href="#" id="link-actualizar">buscar actualización</a>`;
+
+$("#link-actualizar").onclick = async (e) => {
+  e.preventDefault();
+  const a = $("#link-actualizar");
+  a.textContent = "buscando...";
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    await reg?.update();
+    location.reload();
+  } catch (err) {
+    a.textContent = "no se pudo: " + err.message;
+  }
+};
+
+if (yaInstalada()) $("#btn-instalar").classList.add("oculto");
 mostrarJornada();
 await pintarRegistros();
 if ("serviceWorker" in navigator) {
