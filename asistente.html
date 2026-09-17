@@ -233,6 +233,14 @@ a{color:var(--teal)}
     no producen el mismo código y los paquetes se pueden juntar sin ambigüedad.</div>
     <label for="j-seccion">Sección (opcional)</label>
     <input id="j-seccion" autocomplete="off" maxlength="12" placeholder="ej. B">
+    <label for="j-momento">Momento de la medición</label>
+    <select id="j-momento">
+      <option value="linea_base" selected>Línea de base, la primera vez del año</option>
+      <option value="seguimiento">Seguimiento, para ver el cambio</option>
+    </select>
+    <div class="pie" style="margin:-6px 0 12px">Lo que le sirve a la escuela no es el nivel
+    sino <b>cuánto cambió cada chico</b>. Para eso hace falta saber cuál medición es la
+    primera, y no alcanza con la fecha.</div>
     <label for="j-grado">Grado</label>
     <select id="j-grado">
       <option value="1">1.º de primaria</option>
@@ -285,6 +293,7 @@ a{color:var(--teal)}
     </select>
     <label for="sel">Prueba</label>
     <select id="sel"></select>
+    <div class="pie" id="vista-forma" style="margin:-6px 0 12px"></div>
     <label style="display:flex;gap:9px;align-items:center;color:var(--body);font-size:14px;margin:2px 0 14px;cursor:pointer">
       <input type="checkbox" id="ruido" style="width:auto;margin:0">
       Hay ruido de fondo ahora mismo
@@ -371,6 +380,7 @@ a{color:var(--teal)}
   <p class="pie">Cada corrección que hacés queda registrada junto a lo que había dicho la máquina. Eso es lo
   que permite medir después cuánto se equivoca, y mejorarla. &middot;
   <a href="manual.html">Manual de campo</a> &middot;
+  <a href="manual_director.html">Manual para el director</a> &middot;
   <a href="./">Qué es esto y de dónde salen los números</a> &middot;
   <a href="https://github.com/ezequielmolina-lang/fluidez-lectora-demo" target="_blank" rel="noopener">el código</a></p>
 
@@ -380,7 +390,7 @@ a{color:var(--teal)}
 <script type="module">
 import { cargarModelo, evaluarTarea, Op } from "./motor.js";
 import { guardar, listar, borrarTodo, paqueteParaEntregar, pedirPersistencia, espacio,
-         anotarEstudiante, estudiantes, planillaDeLaEscuela } from "./archivo.js";
+         anotarEstudiante, estudiantes, planillaDeLaEscuela, progreso } from "./archivo.js";
 
 const $ = s => document.querySelector(s);
 
@@ -406,7 +416,7 @@ const CLAVE_JORNADA = "fluidez.jornada.v1";
  * `VERSION_APP` se escribe a mano y por eso puede quedar vieja. `huella_estimulos` no: es el
  * resumen del propio archivo de estimulos, calculado al abrir, asi que cambia solo el dia
  * que alguien corrige un item y es lo que de verdad identifica con que material se midio. */
-const VERSION_APP = "2026-09-16";
+const VERSION_APP = "2026-09-17";
 let huellaEstimulos = "";
 
 /* EL IDENTIFICADOR DEL EQUIPO, que no lo escribe nadie.
@@ -446,6 +456,7 @@ function mostrarJornada(){
     $("#j-region").value = jornada.region;
     $("#j-dispositivo").value = jornada.dispositivo ?? "A";
     $("#j-seccion").value = jornada.seccion ?? "";
+    $("#j-momento").value = jornada.momento ?? "linea_base";
     $("#j-grado").value = jornada.grado;
     $("#j-consent").checked = true;
   }
@@ -586,6 +597,12 @@ $("#btn-jornada").onclick = async () => {
        hasta ahora prevenia solamente una convencion escrita en un documento. */
     dispositivo: ($("#j-dispositivo").value.trim() || "A").replace(/[^\w-]+/g, "").toUpperCase(),
     seccion: $("#j-seccion").value.trim(),
+    /* LINEA DE BASE O SEGUIMIENTO.
+     * Sin esto no hay par que comparar, y no alcanza con ordenar por fecha: una toma repetida
+     * el mismo dia, una escuela que empieza en agosto o un chico que falto y se le tomo
+     * despues rompen el orden. El momento lo declara quien toma la prueba, que es el unico
+     * que lo sabe. */
+    momento: $("#j-momento").value,
     grado: $("#j-grado").value,
     consentimiento: true,
     inicio: new Date().toISOString(),
@@ -708,8 +725,60 @@ async function verCodigo(){
   }
   $("#vista-nombre").textContent = anotado
     ? `Ya estaba anotado como ${anotado.nombre}. Tocá el nombre si hay que corregirlo.` : "";
+  await elegirFormaNueva(cod);
 }
 $("#codigo").oninput = verCodigo;
+
+/* NO SE LE TOMA DOS VECES EL MISMO TEXTO AL MISMO CHICO.
+ *
+ * Si la segunda medicion usa el pasaje de la primera, lo que sube no es la lectura: es la
+ * memoria. Y como el indicador que le importa a la escuela es el CAMBIO, un pasaje repetido
+ * fabrica un progreso que no existio. Las formas paralelas estan desde hace rato y nadie las
+ * usaba, porque elegirlas era trabajo del evaluador y en el aula eso no pasa.
+ *
+ * LO QUE ESTO NO PUEDE HACER: solo ve las tomas de ESTA tablet. Si la linea de base se tomo
+ * en otra, el aviso no aparece. Por eso avisa y no bloquea. */
+async function elegirFormaNueva(cod){
+  const sel = $("#sel");
+  const previas = (await listar()).filter(t => t.codigo === cod);
+
+  // La etiqueta original de cada opcion, para no ir apilando avisos en cada tecla.
+  for (const o of sel.options) {
+    if (!o.dataset.limpio) o.dataset.limpio = o.textContent;
+    const cuando = previas.find(t => t.estimulo === o.value);
+    o.textContent = o.dataset.limpio + (cuando
+      ? "  ·  ya la hizo el " + new Date(cuando.fecha).toLocaleDateString("es")
+      : "");
+  }
+
+  $("#vista-forma").textContent = "";
+  if (!previas.length) return;
+
+  const usados = new Set(previas.map(t => t.estimulo));
+  if (!usados.has(sel.value)) return;
+
+  /* La forma de reemplazo tiene que ser de la misma tarea Y DE LA MISMA BANDA.
+     Sin lo segundo, al agotar los cuatro pasajes de 2.º grado la aplicación pasaba al de
+     secundaria, 237 palabras, y le ponía adelante a un chico de siete años un texto que no
+     es para él. Visto el 2026-09-17 probando el caso de "ya no quedan formas". */
+  const actual_ = estimulos.find(e => e.id === sel.value);
+  const libre = [...sel.options].find(o => {
+    if (usados.has(o.value)) return false;
+    const e = estimulos.find(x => x.id === o.value);
+    return e && e.tarea === actual_?.tarea && e.banda === actual_?.banda;
+  });
+
+  if (libre) {
+    sel.value = libre.value;
+    $("#vista-forma").textContent =
+      "Ya se le tomó esa forma, así que se cambió a otra. Repetir el mismo texto mide memoria "
+      + "y no lectura.";
+  } else {
+    $("#vista-forma").textContent =
+      "Ojo: ya se le tomaron todas las formas de esta prueba. Repetir una mide memoria además "
+      + "de lectura.";
+  }
+}
 
 /* EL NOMBRE RECORDADO SE SELECCIONA ENTERO AL TOCARLO.
  *
@@ -900,7 +969,7 @@ $("#btn-no-quiso").onclick = async () => {
       palabras_estimulo: actual.palabras.length, transcripcion: "",
       archivo: "", formato: "",
       version_app: VERSION_APP, huella_estimulos: huellaEstimulos, equipo: idDelEquipo(),
-      escuela: jornada?.escuela ?? "", region: jornada?.region ?? "",
+      momento: jornada?.momento ?? "", escuela: jornada?.escuela ?? "", region: jornada?.region ?? "",
       grado: jornada?.grado ?? "", evaluador: jornada?.evaluador ?? "",
       lengua_materna: $("#lengua").value, ruido: $("#ruido").checked ? "si" : "no",
     }, null);
@@ -1098,6 +1167,7 @@ $("#btn-guardar").onclick = () => {
     version_app: VERSION_APP,
     huella_estimulos: huellaEstimulos,
     equipo: idDelEquipo(),
+    momento: jornada?.momento ?? "",
   };
   /* EL AUDIO SE GUARDA. Sin esto, una jornada entera de trabajo deja una planilla y ningun
      dato de entrenamiento, que es justamente lo que el proyecto necesita. */
@@ -1162,16 +1232,30 @@ async function pintarRegistros(){
     $("#tabla-registros").innerHTML = '<div class="vacio">Las aplicaciones que guardes aparecen acá.</div>';
     return;
   }
-  /* El nombre sale de la lista del aula, que vive en otro almacen y NUNCA en la toma.
-     Se muestra acá porque el docente que tomo la prueba necesita saber a quien vio. */
-  const lista = await estudiantes();
-  $("#tabla-registros").innerHTML = "<table>" + todos.slice(0, 12).map(r => {
-    const quien = lista.get(r.codigo)?.nombre;
+  /* UNA FILA POR ESTUDIANTE Y PRUEBA, no una por grabacion.
+   *
+   * La lista de tomas ordenada por fecha le sirve a quien junta un corpus. A un docente no:
+   * el mismo chico aparece cinco veces y la pregunta que tiene, "¿esta mejor que en marzo?",
+   * no se contesta en ningun lado. Acá cada chico aparece una vez por prueba, con dónde
+   * empezó, dónde está y cuánto cambió.
+   *
+   * Y es además la única comparación honesta que podemos ofrecer: no hay norma peruana
+   * verificada, así que no podemos decir si 38 está bien, pero sí que empezó en 22.
+   *
+   * El nombre sale de la lista del aula, que vive en otro almacén y NUNCA en la toma. */
+  const filas = await progreso();
+  $("#tabla-registros").innerHTML = "<table>" + filas.map(f => {
+    const subio = f.cambio !== "" && f.cambio > 0;
+    const color = f.cambio === "" ? "var(--muted)" : (subio ? "var(--verde)" : "var(--rojo)");
+    const cambio = f.cambio === ""
+      ? '<span style="font-size:12px;color:var(--muted)">1.ª medición</span>'
+      : `<b style="color:${color}">${subio ? "+" : ""}${f.cambio}</b>`;
     return `
-    <tr><td><b>${esc(quien || r.codigo)}</b><br><span style="font-size:11.5px;color:var(--muted)">
-      ${quien ? esc(r.codigo) + " &middot; " : ""}${new Date(r.fecha).toLocaleString("es")}</span></td>
-      <td class="n">${r.pcpm_humano} ppm</td>
-      <td style="font-size:12px;color:var(--muted)">${r.correcciones} corr.</td></tr>`;
+    <tr><td><b>${esc(f.nombre || f.codigo)}</b><br><span style="font-size:11.5px;color:var(--muted)">
+      ${f.nombre ? esc(f.codigo) + " &middot; " : ""}${NOMBRE[f.tarea] || f.tarea}</span></td>
+      <td class="n">${f.pcpm_base}${f.pcpm_ultimo !== "" ? " &rarr; " + f.pcpm_ultimo : ""}
+        <br><span style="font-size:11px;color:var(--muted);font-weight:400">ppm</span></td>
+      <td style="text-align:right">${cambio}</td></tr>`;
   }).join("") + "</table>";
 }
 
@@ -1191,13 +1275,16 @@ function bajar(nombre, texto, tipo){
  * No lleva audio a proposito: es una planilla para abrir y leer, no un archivo que haya que
  * cuidar como si fuera voz de un menor. */
 $("#btn-planilla").onclick = () => conBoton($("#btn-planilla"), "Armando la planilla...", async () => {
-  const { csv, filas, conNombre } = await planillaDeLaEscuela();
+  const { csv, filas, conNombre, conCambio } = await planillaDeLaEscuela();
   if (!filas) return "Todavía no hay nada que listar";
   const escuela = (jornada?.escuela || "escuela").replace(/[^\w-]+/g, "_");
   bajar(`planilla_${escuela}_${new Date().toISOString().slice(0, 10)}.csv`, csv, "text/csv");
-  return conNombre === filas
-    ? `${filas} filas, todas con nombre`
-    : `${filas} filas, ${filas - conNombre} sin nombre`;
+  avisar(`<b>Se bajó la planilla de la escuela</b> con ${filas} filas, una por estudiante y ` +
+         `prueba. ${conCambio ? conCambio + " ya tienen dos mediciones y su cambio" :
+          "Todavía ninguna tiene dos mediciones: el cambio aparece cuando se vuelva a medir"}.` +
+         (conNombre < filas ? ` ${filas - conNombre} sin nombre.` : "") +
+         " <b>Esta planilla lleva nombres: es para ustedes, no para enviar.</b>");
+  return `${filas} filas${conCambio ? ", " + conCambio + " con cambio" : ""}`;
 });
 
 /* El paquete: el audio, las etiquetas y un LEAME, en un solo archivo. Es lo que se entrega. */

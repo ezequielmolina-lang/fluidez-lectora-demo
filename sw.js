@@ -8,8 +8,8 @@
  * Storage con su propia clave. Esto cachea el armazon de la app, que es lo que permite que
  * abra sin señal.
  */
-const CACHE = "fluidez-v10";
-const ARMAZON = ["./", "./index.html", "./asistente.html", "./manual.html", "./motor.js", "./datos.json",
+const CACHE = "fluidez-v11";
+const ARMAZON = ["./", "./index.html", "./asistente.html", "./manual.html", "./manual_director.html", "./motor.js", "./datos.json",
                  "./estimulos.json", "./archivo.js", "./lectura.mp3", "./manifest.json",
                  "./icono.svg", "./icono-192.png", "./icono-512.png"];
 

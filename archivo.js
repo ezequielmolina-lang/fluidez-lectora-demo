@@ -152,27 +152,84 @@ export async function borrarLaLista() {
   db.close();
 }
 
-/* La planilla PARA LA ESCUELA: con nombres, sin audio, y sin salir de acá por accidente.
+/* EL PROGRESO DE CADA ESTUDIANTE, que es lo unico que le sirve a una escuela.
+ *
+ * POR QUE NO ALCANZA CON LISTAR LAS TOMAS: la aplicacion venia devolviendo una fila por
+ * grabacion, ordenada por fecha. Eso le sirve a quien junta un corpus y no le sirve a un
+ * director, cuya pregunta es "¿este chico esta mejor que en marzo?". Y esa es ademas la
+ * unica comparacion honesta que podemos ofrecer, porque no hay norma peruana verificada:
+ * no podemos decir si 38 esta bien, pero si podemos decir que empezo en 22.
+ *
+ * QUE CUENTA COMO MEDICION: solo las que tienen un puntaje. DESCONTINUADO SI cuenta, porque
+ * su cero es legitimo y ademas es el caso que mas importa: un chico que pasa de
+ * descontinuado a 25 es la mejor noticia que puede dar esta herramienta. NO_EVALUABLE y
+ * NO_PARTICIPA no cuentan: no son un cero, son un dato que falta.
+ *
+ * COMO SE ELIGE LA BASE: la que el evaluador declaro como linea de base. Si no hay ninguna
+ * declarada, la mas vieja. No se ordena solo por fecha porque una escuela puede empezar en
+ * agosto, o un chico faltar y que se le tome despues que a sus compañeros. */
+const MIDEN = new Set(["OK", "DESCONTINUADO"]);
+
+export async function progreso() {
+  const [tomas, lista] = await Promise.all([listar(), estudiantes()]);
+  const por = new Map();
+
+  for (const t of tomas) {
+    if (!MIDEN.has(t.estado_humano) || t.pcpm_humano === null || t.pcpm_humano === undefined) continue;
+    /* La clave es un JSON y no "codigo + separador + tarea": un separador hay que
+       elegirlo, escribirlo sin que ningun nivel de comillas lo rompa, y confiar en que
+       no aparezca nunca en un codigo. JSON no necesita nada de eso, y ademas esto ya
+       se rompio una vez: el separador llego al archivo como un NUL de verdad. */
+    const clave = JSON.stringify([t.codigo, t.tarea]);
+    if (!por.has(clave)) por.set(clave, []);
+    por.get(clave).push(t);
+  }
+
+  const filas = [];
+  for (const [clave, tomasDe] of por) {
+    const [codigo, tarea] = JSON.parse(clave);
+    tomasDe.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+    const base = tomasDe.find((t) => t.momento === "linea_base") ?? tomasDe[0];
+    const ultimo = tomasDe[tomasDe.length - 1];
+    const e = lista.get(codigo);
+    filas.push({
+      nombre: e?.nombre ?? "", seccion: e?.seccion ?? "", codigo, tarea,
+      mediciones: tomasDe.length,
+      pcpm_base: base.pcpm_humano, fecha_base: String(base.fecha).slice(0, 10),
+      estimulo_base: base.estimulo,
+      pcpm_ultimo: ultimo === base ? "" : ultimo.pcpm_humano,
+      fecha_ultimo: ultimo === base ? "" : String(ultimo.fecha).slice(0, 10),
+      estimulo_ultimo: ultimo === base ? "" : ultimo.estimulo,
+      cambio: ultimo === base ? "" : ultimo.pcpm_humano - base.pcpm_humano,
+      grado: ultimo.grado ?? "", escuela: ultimo.escuela ?? "",
+      lengua_materna: ultimo.lengua_materna ?? "", evaluador: ultimo.evaluador ?? "",
+    });
+  }
+
+  // Por nombre, que es como la lee una persona, y los sin nombre al final.
+  filas.sort((a, b) => (a.nombre || "￿").localeCompare(b.nombre || "￿", "es")
+                       || a.codigo.localeCompare(b.codigo, "es")
+                       || a.tarea.localeCompare(b.tarea, "es"));
+  return filas;
+}
+
+/* La planilla PARA LA ESCUELA: con nombres, sin audio, y una fila por estudiante y prueba.
  *
  * Es el otro lado del trato. El paquete de entrenamiento no lleva nombres nunca; esta
  * planilla los lleva siempre, porque es para el docente que tomo la prueba y que necesita
  * saber a quien acompaniar el lunes. Son dos archivos, dos botones y dos destinos. */
 export async function planillaDeLaEscuela() {
-  const [tomas, lista] = await Promise.all([listar(), estudiantes()]);
-  const cols = ["nombre", "seccion", "codigo", "estimulo", "tarea", "fecha",
-                "pcpm_humano", "correctas_humano", "estado_humano", "grado", "escuela",
-                "lengua_materna", "evaluador"];
-  const filas = tomas.map((t) => {
-    const e = lista.get(t.codigo);
-    return { ...t, nombre: e?.nombre ?? "", seccion: e?.seccion ?? "" };
-  });
-  // Por nombre, que es como la va a leer una persona, y los sin nombre al final.
-  filas.sort((a, b) => (a.nombre || "￿").localeCompare(b.nombre || "￿", "es")
-                       || a.codigo.localeCompare(b.codigo, "es"));
+  const filas = await progreso();
+  const cols = ["nombre", "seccion", "codigo", "tarea", "mediciones",
+                "pcpm_base", "fecha_base", "estimulo_base",
+                "pcpm_ultimo", "fecha_ultimo", "estimulo_ultimo", "cambio",
+                "grado", "escuela", "lengua_materna", "evaluador"];
   const csv = [cols.join(",")].concat(
     filas.map((f) => cols.map((c) => JSON.stringify(f[c] ?? "")).join(","))
   ).join("\n");
-  return { csv, filas: filas.length, conNombre: filas.filter((f) => f.nombre).length };
+  return { csv, filas: filas.length,
+           conNombre: filas.filter((f) => f.nombre).length,
+           conCambio: filas.filter((f) => f.cambio !== "").length };
 }
 
 /* ---------------------------------------------------------------- el zip, a mano */
@@ -286,7 +343,7 @@ const ORDEN_PREFERIDO = [
   "pcpm_humano", "correctas_humano", "estado_humano",
   "pcpm_maquina", "correctas_maquina", "estado_maquina", "correcciones",
   "humano", "maquina", "palabras_estimulo", "transcripcion",
-  "escuela", "region", "grado", "lengua_materna", "ruido", "evaluador", "formato",
+  "momento", "escuela", "region", "grado", "lengua_materna", "ruido", "evaluador", "formato",
   // De que version salio el dato y de que equipo. Es lo que permite comparar y rehacer.
   "version_app", "huella_estimulos", "equipo",
 ];
