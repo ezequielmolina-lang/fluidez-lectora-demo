@@ -3,6 +3,7 @@
   "id": "letras_sonidos",
   "tarea": "letras",
   "banda": "primaria",
+  "familia": "letras_sonidos",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -114,6 +115,7 @@
   "id": "letras_sonidos_b",
   "tarea": "letras",
   "banda": "primaria",
+  "familia": "letras_sonidos",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -225,6 +227,7 @@
   "id": "silabas",
   "tarea": "silabas",
   "banda": "primaria",
+  "familia": "silabas",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -286,6 +289,7 @@
   "id": "silabas_b",
   "tarea": "silabas",
   "banda": "primaria",
+  "familia": "silabas",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -347,6 +351,7 @@
   "id": "palabras_frecuentes",
   "tarea": "palabras",
   "banda": "primaria",
+  "familia": "palabras_frecuentes",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -393,7 +398,7 @@
    "árbol",
    "hermano",
    "abuela",
-   "papá",
+   "carne",
    "niña",
    "mercado",
    "carro",
@@ -408,6 +413,7 @@
   "id": "palabras_frecuentes_b",
   "tarea": "palabras",
   "banda": "primaria",
+  "familia": "palabras_frecuentes",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -469,6 +475,7 @@
   "id": "pseudopalabras",
   "tarea": "pseudopalabras",
   "banda": "primaria",
+  "familia": "pseudopalabras",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -530,6 +537,7 @@
   "id": "pseudopalabras_b",
   "tarea": "pseudopalabras",
   "banda": "primaria",
+  "familia": "pseudopalabras",
   "grado": 2,
   "limite": 60,
   "es_por_item": true,
@@ -591,6 +599,7 @@
   "id": "pasaje_2do_a",
   "tarea": "pasaje",
   "banda": "primaria",
+  "familia": "2do_estandar",
   "grado": 2,
   "limite": 60,
   "es_por_item": false,
@@ -687,17 +696,33 @@
    "casa."
   ],
   "preguntas": [
-   "¿Con quién camina Rosa a la escuela?",
-   "¿Qué ven en el camino?",
-   "¿Qué quiere ser Rosa cuando sea grande?",
-   "¿Cómo se llama su gato?",
-   "¿Por qué Rosa dice que leer es como viajar sin salir de casa?"
+   {
+    "pregunta": "¿Con quién camina Rosa a la escuela?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué ven en el camino?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué quiere ser Rosa cuando sea grande?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Cómo se llama su gato?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué Rosa dice que leer es como viajar sin salir de casa?",
+    "tipo": "inferencial"
+   }
   ]
  },
  {
   "id": "pasaje_2do_b",
   "tarea": "pasaje",
   "banda": "primaria",
+  "familia": "2do_estandar",
   "grado": 2,
   "limite": 60,
   "es_por_item": false,
@@ -765,17 +790,33 @@
    "juntos."
   ],
   "preguntas": [
-   "¿Dónde vive Tomás?",
-   "¿Qué día baja al mercado?",
-   "¿Qué hizo el burro frente al puente?",
-   "¿Qué sacó Tomás de su bolsa?",
-   "¿Por qué crees que el burro lo siguió?"
+   {
+    "pregunta": "¿Dónde vive Tomás?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué día baja al mercado?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué hizo el burro frente al puente?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué sacó Tomás de su bolsa?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que el burro lo siguió?",
+    "tipo": "inferencial"
+   }
   ]
  },
  {
   "id": "pasaje_2do_c",
   "tarea": "pasaje",
   "banda": "primaria",
+  "familia": "2do_grupos",
   "grado": 2,
   "limite": 60,
   "es_por_item": false,
@@ -870,17 +911,33 @@
    "florece."
   ],
   "preguntas": [
-   "¿Cuántas plantas siembra Clara?",
-   "¿Cuándo las riega?",
-   "¿Qué le pasaba a la tercera planta?",
-   "¿Qué hicieron para ayudarla?",
-   "¿Por qué crees que la planta no crecía en ese lugar?"
+   {
+    "pregunta": "¿Cuántas plantas siembra Clara?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Cuándo las riega?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué le pasaba a la tercera planta?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué hicieron para ayudarla?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que la planta no crecía en ese lugar?",
+    "tipo": "inferencial"
+   }
   ]
  },
  {
   "id": "pasaje_2do_d",
   "tarea": "pasaje",
   "banda": "primaria",
+  "familia": "2do_grupos",
   "grado": 2,
   "limite": 60,
   "es_por_item": false,
@@ -980,17 +1037,33 @@
    "puerta."
   ],
   "preguntas": [
-   "¿Dónde encontró Pedro al perro?",
-   "¿Con qué lo tapó?",
-   "¿Qué le dio su madre al perro?",
-   "¿Qué dijo la madre que había que hacer primero?",
-   "¿Por qué crees que el perro se quedó en la casa de Pedro?"
+   {
+    "pregunta": "¿Dónde encontró Pedro al perro?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Con qué lo tapó?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué le dio su madre al perro?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué dijo la madre que había que hacer primero?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que el perro se quedó en la casa de Pedro?",
+    "tipo": "inferencial"
+   }
   ]
  },
  {
   "id": "pasaje_secundaria_a",
   "tarea": "pasaje",
   "banda": "secundaria",
+  "familia": "secundaria",
   "grado": 7,
   "limite": 60,
   "es_por_item": false,
@@ -1234,17 +1307,33 @@
    "apaga."
   ],
   "preguntas": [
-   "¿En qué continente vive el oso de anteojos?",
-   "¿De dónde viene su nombre?",
-   "¿Qué come casi siempre?",
-   "¿Qué hace el oso cuando no encuentra frutos suficientes?",
-   "¿Por qué el texto dice que proteger al oso no es solo proteger a un animal?"
+   {
+    "pregunta": "¿En qué continente vive el oso de anteojos?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿De dónde viene su nombre?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué come casi siempre?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué hace el oso cuando no encuentra frutos suficientes?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué el texto dice que proteger al oso no es solo proteger a un animal?",
+    "tipo": "inferencial"
+   }
   ]
  },
  {
   "id": "pasaje_secundaria_b",
   "tarea": "pasaje",
   "banda": "secundaria",
+  "familia": "secundaria",
   "grado": 7,
   "limite": 60,
   "es_por_item": false,
@@ -1483,11 +1572,26 @@
    "anticipacion."
   ],
   "preguntas": [
-   "¿En qué región ocurren las heladas?",
-   "¿Por qué baja tanto la temperatura cuando el cielo queda limpio de nubes?",
-   "¿A qué le hace daño sobre todo el friaje?",
-   "Nombrá una medida para protegerse de la helada.",
-   "¿Por qué el texto dice que los pronósticos se publican con semanas de anticipación?"
+   {
+    "pregunta": "¿En qué región ocurren las heladas?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué baja tanto la temperatura cuando el cielo queda limpio de nubes?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿A qué le hace daño sobre todo el friaje?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "Nombrá una medida para protegerse de la helada.",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué el texto dice que los pronósticos se publican con semanas de anticipación?",
+    "tipo": "inferencial"
+   }
   ]
  }
 ]

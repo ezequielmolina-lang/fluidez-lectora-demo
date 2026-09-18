@@ -650,6 +650,10 @@ const ITEMS_CORTE = 10;
 
 const BANDA = { primaria: "Primaria", secundaria: "Secundaria" };
 
+/* Solo se muestra cuando una tarea tiene más de una familia, que hoy pasa en los pasajes de
+   primaria. Sin esto, «forma C» parece la tercera versión del mismo texto y es otra cosa. */
+const FAMILIA = { "2do_grupos": "con grupos consonánticos" };
+
 async function cargarEstimulos(){
   /* Las pruebas salen del banco del proyecto. Agregar una es agregar una entrada al
      archivo, no tocar código. */
@@ -669,6 +673,7 @@ async function cargarEstimulos(){
   } catch { huellaEstimulos = ""; }
   const bruto = JSON.parse(texto);
   estimulos = bruto.map(e => ({ id: e.id, tarea: e.tarea, limite: e.limite, banda: e.banda,
+                                familia: e.familia,
                                 palabras: e.palabras, esPorItem: e.es_por_item,
                                 preguntas: e.preguntas || [] }));
 
@@ -677,8 +682,18 @@ async function cargarEstimulos(){
      se le termina en veinte segundos a un lector de secundaria que lee como se espera, así
      que medir con el texto de segundo grado no mide fluidez. Es la población del programa
      AVANZA+ del Banco Mundial en Colombia. */
-  const cuantas = {}, visto = {};
-  estimulos.forEach(e => cuantas[e.tarea + e.banda] = (cuantas[e.tarea + e.banda] || 0) + 1);
+  /* LA LETRA DE FORMA SE CUENTA DENTRO DE LA FAMILIA, no dentro de la tarea.
+   *
+   * Antes los cuatro pasajes de 2.º grado salían como «forma A, B, C, D», que le dice al
+   * evaluador que son cuatro versiones equivalentes del mismo texto. No lo son: A y B son un
+   * par, C y D son otro, escrito a propósito con cuatro veces más grupos consonánticos para
+   * una prueba distinta. Ahora cada par se numera desde su A, y la familia va en el nombre
+   * cuando hay más de una para la misma tarea. */
+  const cuantas = {}, visto = {}, familiasPorTarea = {};
+  estimulos.forEach(e => {
+    cuantas[e.familia] = (cuantas[e.familia] || 0) + 1;
+    (familiasPorTarea[e.tarea + e.banda] ||= new Set()).add(e.familia);
+  });
   const sel = $("#sel");
   const grupos = {};
   estimulos.forEach(e => {
@@ -687,11 +702,13 @@ async function cargarEstimulos(){
       grupos[e.banda].label = BANDA[e.banda] || e.banda;
       sel.append(grupos[e.banda]);
     }
-    const clave = e.tarea + e.banda;
-    const k = visto[clave] = (visto[clave] || 0) + 1;
+    const k = visto[e.familia] = (visto[e.familia] || 0) + 1;
     const o = document.createElement("option");
     o.value = e.id;
-    o.textContent = NOMBRE[e.tarea] + (cuantas[clave] > 1 ? " · forma " + "ABCD"[k-1] : "")
+    const variasFamilias = familiasPorTarea[e.tarea + e.banda].size > 1;
+    o.textContent = NOMBRE[e.tarea]
+                  + (variasFamilias && FAMILIA[e.familia] ? " " + FAMILIA[e.familia] : "")
+                  + (cuantas[e.familia] > 1 ? " · forma " + "ABCD"[k-1] : "")
                   + " · " + e.palabras.length + (e.esPorItem ? " ítems" : " palabras");
     grupos[e.banda].append(o);
   });
@@ -757,15 +774,22 @@ async function elegirFormaNueva(cod){
   const usados = new Set(previas.map(t => t.estimulo));
   if (!usados.has(sel.value)) return;
 
-  /* La forma de reemplazo tiene que ser de la misma tarea Y DE LA MISMA BANDA.
-     Sin lo segundo, al agotar los cuatro pasajes de 2.º grado la aplicación pasaba al de
-     secundaria, 237 palabras, y le ponía adelante a un chico de siete años un texto que no
-     es para él. Visto el 2026-09-17 probando el caso de "ya no quedan formas". */
+  /* LA FORMA DE REEMPLAZO TIENE QUE SER DE LA MISMA FAMILIA.
+   *
+   * No alcanza con la misma tarea. Hay cuatro pasajes de 2.º grado y NO son cuatro formas
+   * equivalentes: A y B son el par estándar, C y D se escribieron a propósito con cuatro
+   * veces más grupos consonánticos para una prueba distinta. Rotar de A a C en el seguimiento
+   * cambia el texto Y el propósito, y parte del «cambio» que reporta la aplicación sería del
+   * texto y no del chico.
+   *
+   * Antes filtraba por tarea sola y al agotar los pasajes de primaria ofrecía el de
+   * secundaria, 237 palabras adelante de un chico de siete años. La familia arregla las dos
+   * cosas de una vez, porque una familia ya comparte tarea y banda por construcción. */
   const actual_ = estimulos.find(e => e.id === sel.value);
   const libre = [...sel.options].find(o => {
     if (usados.has(o.value)) return false;
     const e = estimulos.find(x => x.id === o.value);
-    return e && e.tarea === actual_?.tarea && e.banda === actual_?.banda;
+    return e && e.familia === actual_?.familia;
   });
 
   if (libre) {
