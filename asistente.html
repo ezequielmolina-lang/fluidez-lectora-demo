@@ -199,6 +199,45 @@ a{color:var(--teal)}
 .volver{position:absolute;left:0;bottom:6px;background:transparent;border:none;color:var(--muted);
   font:600 13px var(--sans);padding:8px 10px;cursor:pointer;pointer-events:auto}
 @media print{ .hoja .modo,.volver{display:none} }
+
+/* LA HOJA DEL EVALUADOR.
+ *
+ * En EGRA de papel hay DOS hojas y esta es la otra: la del chico es limpia y con letra
+ * grande, y esta es donde el evaluador MARCA MIENTRAS EL CHICO LEE. La aplicacion no la
+ * reemplaza, y conviene decirlo: el evaluador corrige en la pantalla DESPUES, cuando el
+ * reconocedor ya devolvio su borrador, y en el minuto en que el chico esta leyendo no hay
+ * nada que mirar. Ademas, si el telefono se queda sin bateria o el audio sale mudo, la hoja
+ * de papel es lo unico que queda de esa toma.
+ *
+ * EL NUMERO AL FINAL DE CADA LINEA es acumulado a proposito, que es como estan hechas las
+ * hojas de EGRA: cuando suenan los 60 segundos el evaluador marca hasta donde llego y lee
+ * el total de esa linea, en vez de contar palabras una por una con el chico esperando. */
+.hoja .eval{max-width:900px;margin:0 auto;color:#000}
+.hoja .eval .datos{display:flex;flex-wrap:wrap;gap:10px 22px;font:13px var(--sans);
+  border-bottom:1.5px solid #000;padding-bottom:10px;margin-bottom:12px}
+.hoja .eval .datos span{flex:1 1 170px;color:#000}
+.hoja .eval .datos i{font-style:normal;color:#666}
+.hoja .eval .linea{display:flex;align-items:baseline;gap:12px;border-bottom:1px dotted #bbb;
+  padding:7px 0}
+.hoja .eval .ws{flex:1 1 auto;display:flex;flex-wrap:wrap;gap:2px 16px;font:19px/1.75 var(--sans)}
+.hoja .eval .n{flex:0 0 40px;text-align:right;font:600 13px var(--mono);color:#666;
+  padding-right:4px}
+/* En un telefono esta hoja se ve apretada, y esta bien: es para IMPRIMIR. Se achica la
+   letra para que igual se pueda revisar en pantalla antes de mandarla a la impresora. */
+@media (max-width:600px){
+  .hoja .eval .ws{font-size:15px;gap:2px 10px}
+  .hoja .eval .datos{font-size:12px}
+}
+.hoja .eval .reglas{margin-top:14px;font:12.5px/1.65 var(--sans);color:#333;
+  border-top:1.5px solid #000;padding-top:10px}
+.hoja .eval .reglas b{color:#000}
+.hoja .eval .reglas li{margin:3px 0}
+.hoja .eval .reglas ul{margin:4px 0 0;padding-left:18px}
+@media print{
+  .hoja .eval .linea{padding:5px 0}
+  .hoja .eval .ws{font-size:17px}
+  .hoja .eval .reglas{font-size:11px}
+}
 </style>
 </head>
 <body>
@@ -216,8 +255,9 @@ a{color:var(--teal)}
     <button class="btn chico" id="btn-cerrar-hoja" style="margin:0">Listo</button></span>
   </div>
   <div class="modo oculto" id="hoja-modo">
-    <button id="m-hoja" class="on">Hoja completa</button>
+    <button id="m-hoja" class="on">Hoja del estudiante</button>
     <button id="m-uno">De a uno</button>
+    <button id="m-eval">Hoja del evaluador</button>
   </div>
   <div id="hoja-items"></div>
 </div>
@@ -429,7 +469,7 @@ const CLAVE_JORNADA = "fluidez.jornada.v1";
  * `VERSION_APP` se escribe a mano y por eso puede quedar vieja. `huella_estimulos` no: es el
  * resumen del propio archivo de estimulos, calculado al abrir, asi que cambia solo el dia
  * que alguien corrige un item y es lo que de verdad identifica con que material se midio. */
-const VERSION_APP = "2026-09-20";
+const VERSION_APP = "2026-09-21";
 let huellaEstimulos = "";
 
 /* EL IDENTIFICADOR DEL EQUIPO, que no lo escribe nadie.
@@ -905,16 +945,98 @@ function pintarLectura(){
  * cada aplicacion: un puntaje "de a uno" NO se compara contra los 74 ppm de Antioquia ni
  * contra ninguna norma. */
 const CLAVE_MODO = "fluidez.modo.v1";
-let modoUno = false;
-try { modoUno = localStorage.getItem(CLAVE_MODO) === "uno"; } catch {}
+let modoHoja = "estudiante";   // estudiante | uno | evaluador
+try {
+  const g = localStorage.getItem(CLAVE_MODO);
+  if (g === "uno" || g === "evaluador") modoHoja = g;
+} catch {}
 let idxUno = 0;
+
+/* Diez por linea en el pasaje. Es el numero de las hojas de EGRA de papel: con lineas de
+   diez, el acumulado del margen es un multiplo de diez y el evaluador lo lee sin sumar. */
+const POR_LINEA = 10;
+
+function pintarHojaEvaluador(c){
+  c.className = "eval";
+  c.innerHTML = "";
+
+  const datos = document.createElement("div");
+  datos.className = "datos";
+  for (const campo of ["Código del estudiante", "Grado y sección", "Fecha", "Evaluador"]) {
+    const s = document.createElement("span");
+    s.innerHTML = esc(campo) + ": <i>_______________</i>";
+    datos.append(s);
+  }
+  const forma = document.createElement("span");
+  forma.innerHTML = "Forma: <i>" + esc(actual.id) + "</i>";
+  datos.append(forma);
+  c.append(datos);
+
+  const porLinea = actual.esPorItem ? (COLUMNAS[actual.tarea] || 5) : POR_LINEA;
+  for (let i = 0; i < actual.palabras.length; i += porLinea) {
+    const linea = document.createElement("div");
+    linea.className = "linea";
+    const ws = document.createElement("div");
+    ws.className = "ws";
+    for (const w of actual.palabras.slice(i, i + porLinea)) {
+      const s = document.createElement("span");
+      s.textContent = w;
+      ws.append(s);
+    }
+    const n = document.createElement("div");
+    n.className = "n";
+    n.textContent = Math.min(i + porLinea, actual.palabras.length);
+    linea.append(ws, n);
+    c.append(linea);
+  }
+
+  /* LAS PREGUNTAS VAN EN LA HOJA AUNQUE LA APLICACION NO LAS PUNTUE.
+   *
+   * La aplicacion mide fluidez y no comprension, pero el evaluador las tiene que tener a
+   * mano igual: el protocolo de EGRA las hace despues de la lectura, en voz alta, y quedan
+   * anotadas en papel. Y la regla que las acompaña no es obvia: SOLO SE PREGUNTA POR LA
+   * PARTE QUE EL CHICO ALCANZO A LEER. En el instrumento salvadoreño cada pregunta lleva al
+   * lado el numero de palabra a partir del cual se puede hacer, justamente por eso.
+   * Preguntar por un final que no leyo mide memoria de nada. */
+  if ((actual.preguntas || []).length) {
+    const p = document.createElement("div");
+    p.className = "reglas";
+    const items = actual.preguntas
+      .map(q => "<li>" + esc(q.pregunta || q) +
+                (q.tipo ? " <i style='color:#777'>(" + esc(q.tipo) + ")</i>" : "") + "</li>")
+      .join("");
+    p.innerHTML = "<b>Después de leer, solo sobre la parte que alcanzó a leer.</b>" +
+                  "<ul>" + items + "</ul>";
+    c.append(p);
+  }
+
+  const reglas = document.createElement("div");
+  reglas.className = "reglas";
+  reglas.innerHTML =
+    "<b>Cómo se marca.</b> Una barra sobre la palabra leída mal u omitida. " +
+    "Al minuto, un corchete después de la última palabra leída." +
+    "<ul>" +
+    "<li><b>Cuenta como correcta</b> si el chico llega a decirla: aunque silabee, " +
+    "deletree, repita o arranque dos veces. Lo que se mide es si la leyó, no cuánto le costó.</li>" +
+    "<li><b>El acento no es un error.</b> «culoris» por «colores», «lo domingo» por «los " +
+    "domingos» y «juerte» por «fuerte» son correctas. El chico lee bien y habla como se " +
+    "habla donde vive.</li>" +
+    "<li><b>Cuenta como error</b> si dijo otra palabra, si la dejó por la mitad o si la " +
+    "salteó. Si se corrige sola después, cuenta como correcta.</li>" +
+    "<li>Si no acierta ninguna de las <b>diez primeras</b>, se detiene la prueba y se anota " +
+    "descontinuada.</li>" +
+    "</ul>";
+  c.append(reglas);
+}
 
 function pintarHoja(){
   const c = document.getElementById("hoja-items");
   c.innerHTML = "";
   c.style.gridTemplateColumns = "";
 
-  if (actual.esPorItem && modoUno) {
+  if (modoHoja === "evaluador") { pintarHojaEvaluador(c); return; }
+
+  if (actual.esPorItem && modoHoja === "uno") {
     c.className = "uno";
     const ultimo = idxUno >= actual.palabras.length - 1;
     const it = document.createElement("div");
@@ -954,9 +1076,12 @@ function pintarHoja(){
 
 function abrirHoja(){
   document.getElementById("hoja-tit").textContent = NOMBRE[actual.tarea];
-  /* El pasaje no se lee de a una palabra: eso no es leer. El modo solo existe para las
-     cuatro subtareas de items sueltos. */
-  document.getElementById("hoja-modo").classList.toggle("oculto", !actual.esPorItem);
+  /* La barra de modos ahora se muestra SIEMPRE, porque la hoja del evaluador aplica a las
+     cinco subtareas. Lo que se esconde es «De a uno», que solo tiene sentido con items
+     sueltos: un pasaje leido de a una palabra no es leer. */
+  document.getElementById("hoja-modo").classList.remove("oculto");
+  $("#m-uno").classList.toggle("oculto", !actual.esPorItem);
+  if (modoHoja === "uno" && !actual.esPorItem) modoHoja = "estudiante";
   idxUno = 0;
   pintarModo();
   pintarHoja();
@@ -964,22 +1089,25 @@ function abrirHoja(){
 }
 
 function pintarModo(){
-  $("#m-hoja").classList.toggle("on", !modoUno);
-  $("#m-uno").classList.toggle("on", modoUno);
+  $("#m-hoja").classList.toggle("on", modoHoja === "estudiante");
+  $("#m-uno").classList.toggle("on", modoHoja === "uno");
+  $("#m-eval").classList.toggle("on", modoHoja === "evaluador");
   /* Imprimir no tiene sentido de a uno, y es un boton menos para que el chico toque
      sin querer mientras tiene el telefono en la mano. */
-  $("#btn-imprimir").classList.toggle("oculto", modoUno && actual && actual.esPorItem);
-  $("#aviso-modo").classList.toggle("oculto", !(modoUno && actual && actual.esPorItem));
+  const deAUno = modoHoja === "uno" && actual && actual.esPorItem;
+  $("#btn-imprimir").classList.toggle("oculto", deAUno);
+  $("#aviso-modo").classList.toggle("oculto", !deAUno);
 }
 
-function cambiarModo(uno){
-  modoUno = uno; idxUno = 0;
-  try { localStorage.setItem(CLAVE_MODO, uno ? "uno" : "hoja"); } catch {}
+function cambiarModo(modo){
+  modoHoja = modo; idxUno = 0;
+  try { localStorage.setItem(CLAVE_MODO, modo); } catch {}
   pintarModo(); pintarHoja();
 }
 
-$("#m-hoja").onclick = () => cambiarModo(false);
-$("#m-uno").onclick = () => cambiarModo(true);
+$("#m-hoja").onclick = () => cambiarModo("estudiante");
+$("#m-uno").onclick = () => cambiarModo("uno");
+$("#m-eval").onclick = () => cambiarModo("evaluador");
 $("#btn-hoja").onclick = abrirHoja;
 
 /* EL CHICO QUE NO QUIERE, que hasta ahora no se podia registrar sin mentir.
@@ -1227,7 +1355,7 @@ $("#btn-guardar").onclick = () => {
     codigo: $("#est-cabecera").textContent,
     estimulo: actual.id,
     tarea: actual.tarea,
-    modo: (actual.esPorItem && modoUno) ? "de_a_uno" : "hoja_completa",
+    modo: (actual.esPorItem && modoHoja === "uno") ? "de_a_uno" : "hoja_completa",
     fecha: new Date().toISOString(),
     duracion: +resultado.duracion.toFixed(1),
     segundos: +seg.toFixed(2),

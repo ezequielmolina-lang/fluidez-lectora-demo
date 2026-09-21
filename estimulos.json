@@ -596,6 +596,163 @@
   "preguntas": []
  },
  {
+  "id": "pasaje_1ro_a",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "1ro_estandar",
+  "grado": 1,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Tito",
+   "tiene",
+   "un",
+   "gato",
+   "pequeño.",
+   "El",
+   "gato",
+   "se",
+   "llama",
+   "Nube.",
+   "Cada",
+   "mañana",
+   "Nube",
+   "toma",
+   "su",
+   "leche.",
+   "Después",
+   "duerme",
+   "sobre",
+   "la",
+   "cama.",
+   "Tito",
+   "lo",
+   "lleva",
+   "al",
+   "patio.",
+   "Los",
+   "dos",
+   "juegan",
+   "con",
+   "una",
+   "pelota.",
+   "Nube",
+   "corre",
+   "y",
+   "salta",
+   "muy",
+   "rápido.",
+   "Tito",
+   "se",
+   "ríe",
+   "y",
+   "lo",
+   "abraza."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿Cómo se llama el gato?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué toma Nube cada mañana?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Dónde duerme el gato?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Con qué juegan los dos?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que Tito se ríe?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
+  "id": "pasaje_1ro_b",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "1ro_estandar",
+  "grado": 1,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Sara",
+   "vive",
+   "en",
+   "una",
+   "casa",
+   "azul.",
+   "Su",
+   "papá",
+   "tiene",
+   "una",
+   "chacra",
+   "chica.",
+   "Ahí",
+   "siembra",
+   "papa",
+   "y",
+   "maíz.",
+   "Sara",
+   "le",
+   "lleva",
+   "agua",
+   "al",
+   "mediodía.",
+   "Los",
+   "dos",
+   "comen",
+   "bajo",
+   "un",
+   "árbol.",
+   "Después",
+   "Sara",
+   "junta",
+   "las",
+   "hojas",
+   "secas.",
+   "Su",
+   "papá",
+   "le",
+   "da",
+   "una",
+   "flor.",
+   "Ella",
+   "la",
+   "pone",
+   "en",
+   "su",
+   "pelo."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿De qué color es la casa de Sara?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué siembra el papá en la chacra?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué le lleva Sara a su papá?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Dónde pone Sara la flor?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que comen bajo un árbol?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
   "id": "pasaje_2do_a",
   "tarea": "pasaje",
   "banda": "primaria",
