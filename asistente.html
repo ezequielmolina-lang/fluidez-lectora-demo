@@ -469,7 +469,7 @@ const CLAVE_JORNADA = "fluidez.jornada.v1";
  * `VERSION_APP` se escribe a mano y por eso puede quedar vieja. `huella_estimulos` no: es el
  * resumen del propio archivo de estimulos, calculado al abrir, asi que cambia solo el dia
  * que alguien corrige un item y es lo que de verdad identifica con que material se midio. */
-const VERSION_APP = "2026-09-21d";
+const VERSION_APP = "2026-09-21e";
 let huellaEstimulos = "";
 
 /* EL IDENTIFICADOR DEL EQUIPO, que no lo escribe nadie.
@@ -1647,16 +1647,39 @@ $("#pie-version").innerHTML =
   (yaInstalada() ? " · instalada en este equipo" : "") +
   ` · <a href="#" id="link-actualizar">buscar actualización</a>`;
 
+/* EL BOTON TIENE QUE CONTESTAR, NO SOLO RECARGAR.
+ *
+ * La version anterior decia "buscando..." y recargaba. Desde afuera eso es indistinguible de
+ * que no haya pasado nada: el evaluador que revisa la noche anterior si tiene la ultima
+ * version terminaba igual que antes, sin saber. Ahora se le pregunta a la red que version hay
+ * publicada y se dice cual de las dos cosas paso, con el numero a la vista.
+ *
+ * Se lee la version del HTML publicado y no un archivo de version aparte, porque un archivo
+ * aparte se olvida de actualizar y entonces miente. */
+async function versionPublicada() {
+  const r = await fetch("asistente.html?u=" + Date.now(), { cache: "no-store" });
+  const t = await r.text();
+  return (t.match(/const VERSION_APP = "([^"]+)"/) || [])[1] || null;
+}
+
 $("#link-actualizar").onclick = async (e) => {
   e.preventDefault();
   const a = $("#link-actualizar");
-  a.textContent = "buscando...";
+  const decir = t => { a.textContent = t; };
+  decir("buscando...");
   try {
+    const hay = await versionPublicada();
     const reg = await navigator.serviceWorker?.getRegistration();
     await reg?.update();
-    location.reload();
+    if (hay && hay === VERSION_APP) {
+      decir("ya tenés la última (" + VERSION_APP + ")");
+      return;
+    }
+    decir(hay ? "hay una nueva (" + hay + "), cargando..." : "cargando...");
+    setTimeout(() => location.reload(), 900);
   } catch (err) {
-    a.textContent = "no se pudo: " + err.message;
+    /* Sin señal esto falla, y es el caso normal en el aula: hay que decirlo asi. */
+    decir("sin señal: seguís con la " + VERSION_APP);
   }
 };
 
