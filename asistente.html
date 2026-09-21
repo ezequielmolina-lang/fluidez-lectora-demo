@@ -1246,6 +1246,11 @@ let analizador = null, ctxAudio = null, cuadro = null;
 function medirNivel(stream){
   try {
     ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+    /* UN AudioContext PUEDE ARRANCAR SUSPENDIDO y entonces el medidor se queda en cero sin
+       decir nada. Se vio armando el video con Chromium, pero no es cosa del navegador de
+       prueba: pasa en cualquier navegador cuando el contexto se crea sin un gesto reciente,
+       y ahi el evaluador ve una barra muerta y cree que el microfono no toma. */
+    ctxAudio.resume?.().catch(() => {});
     const fuente = ctxAudio.createMediaStreamSource(stream);
     analizador = ctxAudio.createAnalyser();
     analizador.fftSize = 1024;
