@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Este equipo sirve? · Fluidez lectora</title>
+<link rel="icon" href="icono.svg">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<!--
+  ¿ESTE EQUIPO SIRVE? La revisión que se hace la noche anterior, con wifi y sin apuro.
+
+  POR QUE EXISTE: hasta ahora la única forma de saber si un teléfono servía era llevarlo a la
+  escuela y averiguarlo con el chico sentado al lado. Cuando algo falla ahí, falla caro: se
+  perdió el turno del aula, y casi nunca vuelve información de qué pasó. Los cinco controles
+  de acá son, uno por uno, las cinco cosas que ya rompieron en este proyecto:
+
+    1. El navegador no sabe grabar, o graba en un formato que después nadie abre. Un iPhone
+       graba mp4 y un Android webm: escribir el tipo a mano rompe el dato en silencio.
+    2. El micrófono abre pero no entra sonido. El medidor de nivel estuvo clavado en 0% y no
+       era el micrófono: era un AudioContext que arranca suspendido y un requestAnimationFrame
+       que en esta página no corre. Por eso acá se MIDE la señal, no se pregunta si hay permiso.
+    3. No entra el modelo, o no entran las grabaciones del día.
+    4. El reconocedor se baja pero no corre en este aparato. Bajarlo y ejecutarlo son dos
+       cosas distintas, y la segunda es la que falla en equipos viejos.
+    5. La app no quedó guardada para andar sin señal, que es justo lo que hace falta en el aula.
+
+  LO QUE NO HACE: no dice que la medición vaya a ser buena. Dice que este aparato puede
+  tomarla. Son dos cosas distintas y la página lo repite abajo.
+-->
+<style>
+:root{
+  --ink:#13303a; --ink2:#16242f; --teal:#1a4a57; --gold:#c89a3c;
+  --verde:#186b43; --verde-f:#e4f2ea; --rojo:#a51f18; --rojo-f:#fbe9e8;
+  --ambar:#8a6512; --ambar-f:#fbf3e0;
+  --cream:#f1efe9; --cream2:#fff; --line:#e2dcce; --body:#3a444d; --muted:#7c8590;
+  --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--cream);color:var(--body);font:16px/1.5 var(--sans);
+  padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 40px}
+header{background:var(--ink);color:#fff;padding:18px 0;margin-bottom:18px;
+  padding-top:calc(18px + env(safe-area-inset-top))}
+header .wrap{display:flex;align-items:center;gap:12px;padding-bottom:0}
+header h1{font-size:17px;font-weight:600;letter-spacing:-.01em}
+header .est{margin-left:auto;font:700 10px var(--mono);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--gold)}
+h2{font-size:21px;color:var(--ink);letter-spacing:-.015em;margin-bottom:6px}
+.paso{background:var(--cream2);border:1px solid var(--line);border-radius:14px;
+  padding:18px;margin-bottom:14px}
+.intro p{margin-bottom:9px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--ink);color:#fff;border:0;border-radius:11px;padding:15px 22px;
+  font:600 16px var(--sans);cursor:pointer;width:100%}
+.btn:disabled{opacity:.45}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.chico{font-size:13.5px;color:var(--muted)}
+
+.control{display:flex;gap:13px;padding:14px 0;border-bottom:1px solid var(--line)}
+.control:last-child{border-bottom:0}
+.marca{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font:700 14px var(--sans);border:1.5px solid var(--line);
+  color:var(--muted);margin-top:1px}
+.marca.bien{background:var(--verde-f);border-color:var(--verde);color:var(--verde)}
+.marca.mal{background:var(--rojo-f);border-color:var(--rojo);color:var(--rojo)}
+.marca.duda{background:var(--ambar-f);border-color:var(--ambar);color:var(--ambar)}
+.marca.girando{border-top-color:var(--ink);animation:giro .8s linear infinite}
+@keyframes giro{to{transform:rotate(360deg)}}
+.control h3{font-size:15.5px;color:var(--ink2);font-weight:600;margin-bottom:2px}
+.control p{font-size:14px;line-height:1.45}
+.control .detalle{font:500 12.5px var(--mono);color:var(--muted);margin-top:3px;
+  word-break:break-word}
+
+.nivel{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:9px 0 5px}
+.nivel span{display:block;height:100%;width:0;background:var(--verde);transition:width .08s}
+.barra{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:8px}
+.barra span{display:block;height:100%;width:0;background:var(--gold);transition:width .25s}
+
+.veredicto{border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid}
+.veredicto.bien{background:var(--verde-f);border-color:var(--verde)}
+.veredicto.mal{background:var(--rojo-f);border-color:var(--rojo)}
+.veredicto.duda{background:var(--ambar-f);border-color:var(--ambar)}
+.veredicto h2{margin-bottom:4px}
+.veredicto.bien h2{color:var(--verde)}
+.veredicto.mal h2{color:var(--rojo)}
+.veredicto.duda h2{color:var(--ambar)}
+pre.resumen{background:var(--ink2);color:#dfe6ea;border-radius:11px;padding:13px;
+  font:500 12px/1.55 var(--mono);white-space:pre-wrap;word-break:break-word;margin-top:10px}
+.oculto{display:none}
+.pie{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
+.pie a{color:var(--teal)}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <h1>¿Este equipo sirve?</h1>
+  <span class="est">Revisión</span>
+</div></header>
+
+<div class="wrap">
+
+  <div class="paso intro">
+    <h2>Cinco minutos, con wifi, la noche anterior</h2>
+    <p>Esta revisión prueba de verdad lo que hace falta para tomar la prueba: que el
+    micrófono entre sonido, que haya espacio, y que el reconocedor se baje <strong>y además
+    corra</strong> en este aparato.</p>
+    <p class="chico">Hacela en el mismo teléfono o tablet que vas a llevar al aula, y con
+    wifi. Se bajan unos 45 MB una sola vez. Después de esto, el aparato funciona sin señal.</p>
+    <p class="chico" style="margin-top:9px">Te va a pedir permiso para el micrófono y te va a
+    pedir que hables tres segundos. No se guarda nada de lo que digas.</p>
+    <button class="btn" id="btn-revisar" style="margin-top:14px">Revisar este equipo</button>
+  </div>
+
+  <div class="veredicto oculto" id="veredicto">
+    <h2 id="v-titulo"></h2>
+    <p id="v-texto"></p>
+    <pre class="resumen oculto" id="v-resumen"></pre>
+    <button class="btn sec oculto" id="btn-copiar" style="margin-top:10px">Copiar el resumen</button>
+  </div>
+
+  <div class="paso oculto" id="controles"></div>
+
+  <p class="pie">
+    <a href="asistente.html">Abrir el asistente</a> &middot;
+    <a href="./">Qué es esto</a> &middot;
+    <a href="manual.html">Manual de campo</a>
+  </p>
+  <p class="pie" style="margin-top:6px">Que este aparato pueda tomar la prueba no quiere decir
+  que la medición sea buena. Son dos cosas distintas.</p>
+</div>
+
+<script type="module">
+const $ = s => document.querySelector(s);
+
+/* Cada control es una fila que empieza en «pendiente» y termina en bien, mal o duda.
+ * DUDA NO ES MAL, y la diferencia importa: si el evaluador no dio permiso al microfono, el
+ * equipo no falla, no se pudo comprobar. Decir «no sirve» ahi seria mentir, y quien lo lea
+ * va a buscar otro telefono que capaz tampoco haga falta. */
+const CONTROLES = [
+  ["navegador", "El navegador sabe grabar"],
+  ["microfono", "Entra sonido por el micrófono"],
+  ["espacio", "Hay espacio para el día entero"],
+  ["modelo", "El reconocedor se baja y corre acá"],
+  ["sinsenal", "Queda guardado para andar sin señal"],
+];
+const estado = {};
+
+function pintarControles() {
+  $("#controles").innerHTML = CONTROLES.map(([id, titulo]) => `
+    <div class="control" id="c-${id}">
+      <div class="marca" id="m-${id}">·</div>
+      <div style="flex:1">
+        <h3>${titulo}</h3>
+        <p id="t-${id}">Esperando</p>
+        <div class="detalle" id="d-${id}"></div>
+        <div id="extra-${id}"></div>
+      </div>
+    </div>`).join("");
+  $("#controles").classList.remove("oculto");
+}
+
+function marcar(id, como, texto, detalle) {
+  estado[id] = { como, texto, detalle: detalle || "" };
+  const m = $("#m-" + id);
+  m.className = "marca " + (como === "corriendo" ? "girando" : como);
+  m.textContent = { bien: "✓", mal: "✕", duda: "?", corriendo: "", pendiente: "·" }[como] ?? "·";
+  $("#t-" + id).textContent = texto;
+  $("#d-" + id).textContent = detalle || "";
+}
+
+/* ---------------- 1. el navegador ---------------- */
+const FORMATOS = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+
+function revisarNavegador() {
+  marcar("navegador", "corriendo", "Revisando");
+  const falta = [];
+  if (!window.MediaRecorder) falta.push("no sabe grabar audio (MediaRecorder)");
+  if (!navigator.mediaDevices?.getUserMedia) falta.push("no da acceso al micrófono");
+  if (!window.indexedDB) falta.push("no puede guardar las grabaciones (IndexedDB)");
+  if (!window.isSecureContext) falta.push("la página no está abierta por https");
+  const formato = FORMATOS.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || "";
+  if (window.MediaRecorder && !formato) falta.push("no acepta ningún formato de audio conocido");
+
+  if (falta.length) {
+    marcar("navegador", "mal", "Le falta algo: " + falta.join("; "),
+           navigator.userAgent);
+    return false;
+  }
+  marcar("navegador", "bien", "Graba en " + formato.split(";")[0],
+         navigator.userAgent);
+  return true;
+}
+
+/* ---------------- 2. el microfono, midiendo de verdad ---------------- */
+/* SE MIDE LA SEÑAL, NO SE PREGUNTA SI HAY PERMISO. Un micrófono con permiso dado puede
+ * entregar silencio: pasa con el AudioContext que arranca suspendido, que es exactamente el
+ * defecto que tuvo esta app y que dejaba el medidor en 0% con todo lo demás en orden. */
+async function revisarMicrofono() {
+  marcar("microfono", "corriendo", "Pedí permiso al micrófono, después hablá tres segundos");
+  $("#extra-microfono").innerHTML = '<div class="nivel"><span id="nivel-in"></span></div>';
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    marcar("microfono", "duda", "No se pudo abrir el micrófono, así que no se pudo comprobar",
+           e.name + ": " + e.message);
+    $("#extra-microfono").innerHTML = "";
+    return null;
+  }
+
+  const ctx = new AudioContext();
+  await ctx.resume?.();                       /* arranca suspendido en varios navegadores */
+  const an = ctx.createAnalyser();
+  an.fftSize = 1024;
+  ctx.createMediaStreamSource(stream).connect(an);
+  const datos = new Float32Array(an.fftSize);
+
+  let pico = 0;
+  const hasta = Date.now() + 5000;
+  /* setInterval y no requestAnimationFrame: rAF no corre seguido con la pantalla tapada o la
+   * pestaña de fondo, y ahi la barra queda quieta aunque entre sonido. */
+  await new Promise(listo => {
+    const t = setInterval(() => {
+      an.getFloatTimeDomainData(datos);
+      let s = 0;
+      for (const v of datos) s += v * v;
+      const rms = Math.sqrt(s / datos.length);
+      pico = Math.max(pico, rms);
+      const alto = Math.min(100, Math.max(0, (20 * Math.log10(rms || 1e-6) + 60) * 1.9));
+      $("#nivel-in").style.width = alto + "%";
+      const quedan = Math.ceil((hasta - Date.now()) / 1000);
+      if (quedan > 0) $("#t-microfono").textContent = `Hablá fuerte... ${quedan}`;
+      if (Date.now() > hasta) { clearInterval(t); listo(); }
+    }, 90);
+  });
+  stream.getTracks().forEach(t => t.stop());
+  ctx.close();
+  $("#extra-microfono").innerHTML = "";
+
+  const db = (20 * Math.log10(pico || 1e-6)).toFixed(0);
+  if (pico < 0.004) {
+    marcar("microfono", "mal", "El micrófono abrió pero no entró sonido",
+           `pico ${db} dB. Revisá que no esté tapado ni silenciado, y probá de nuevo`);
+    return false;
+  }
+  if (pico < 0.02) {
+    marcar("microfono", "duda", "Entró sonido, pero muy bajo",
+           `pico ${db} dB. En el aula hay ruido: conviene acercar el teléfono al chico`);
+    return true;
+  }
+  marcar("microfono", "bien", "Entra sonido con buen nivel", `pico ${db} dB`);
+  return true;
+}
+
+/* ---------------- 3. el espacio ---------------- */
+/* Una toma de 40 segundos pesa del orden de 100 KB. Una jornada de 30 chicos por 5 subtareas
+ * son 150 tomas, unos 15 MB, mas los 45 del modelo. Con 300 MB libres sobra; abajo de 100 hay
+ * que avisar, porque el aparato se queda sin lugar CON EL AULA YA ARMADA. */
+async function revisarEspacio() {
+  marcar("espacio", "corriendo", "Revisando");
+  if (!navigator.storage?.estimate) {
+    marcar("espacio", "duda", "Este navegador no informa cuánto espacio hay",
+           "no se pudo comprobar");
+    return null;
+  }
+  const { quota = 0, usage = 0 } = await navigator.storage.estimate();
+  const libreMB = (quota - usage) / 1e6;
+  const det = `${(usage / 1e6).toFixed(0)} MB usados de ${(quota / 1e6).toFixed(0)} MB`;
+  if (libreMB < 100) {
+    marcar("espacio", "mal", `Quedan ${libreMB.toFixed(0)} MB, y no alcanza`, det);
+    return false;
+  }
+  if (libreMB < 300) {
+    marcar("espacio", "duda", `Quedan ${libreMB.toFixed(0)} MB, justo para una jornada`, det);
+    return true;
+  }
+  marcar("espacio", "bien", `Quedan ${libreMB.toFixed(0)} MB, de sobra`, det);
+  return true;
+}
+
+/* ---------------- 4. el reconocedor: bajarlo Y correrlo ---------------- */
+/* SON DOS COSAS DISTINTAS Y LA SEGUNDA ES LA QUE FALLA. Que los 45 MB entren no dice nada de
+ * si el aparato puede ejecutarlos: en equipos viejos la descarga termina bien y la primera
+ * transcripcion se queda sin memoria. Por eso acá se transcribe un audio de verdad y se
+ * exige que devuelva palabras. */
+async function revisarModelo() {
+  marcar("modelo", "corriendo", "Bajando el reconocedor");
+  $("#extra-modelo").innerHTML = '<div class="barra"><span id="barra-in"></span></div>';
+  const t0 = performance.now();
+  let motor;
+  try {
+    motor = await import("./motor.js");
+    const vistos = {};
+    await motor.cargarModelo(p => {
+      if (p.status === "progress" && p.file) {
+        vistos[p.file] = p.progress || 0;
+        const v = Object.values(vistos);
+        $("#barra-in").style.width = (v.reduce((a, b) => a + b, 0) / v.length) + "%";
+      }
+    });
+  } catch (e) {
+    $("#extra-modelo").innerHTML = "";
+    marcar("modelo", "mal", "No se pudo bajar el reconocedor", e.message);
+    return false;
+  }
+  const bajada = (performance.now() - t0) / 1000;
+
+  $("#t-modelo").textContent = "Bajó. Ahora se prueba que corra acá";
+  try {
+    const blob = await (await fetch("lectura.mp3")).blob();
+    const { audio } = await motor.aFloat32_16k(blob);
+    const t1 = performance.now();
+    /* Ocho segundos alcanzan para saber si corre, y no hacen esperar un minuto de mas. */
+    const res = await motor.transcribir(audio.slice(0, 16000 * 8));
+    const corrida = (performance.now() - t1) / 1000;
+    const palabras = res?.palabras || [];
+    $("#extra-modelo").innerHTML = "";
+    if (palabras.length < 3) {
+      marcar("modelo", "mal", "Corrió pero no entendió nada",
+             `devolvió ${palabras.length} palabras en ${corrida.toFixed(1)} s`);
+      return false;
+    }
+    const dicho = palabras.slice(0, 6).join(" ");
+    /* «LENTO» NO DICE NADA; LO QUE SIRVE ES CUANTO VA A ESPERAR EL EVALUADOR. Se proyecta el
+     * caso real, una toma de un minuto, que es lo que va a pasar treinta veces en la jornada.
+     * Mas de un minuto de espera por chico ya se siente en el aula; mas de tres es inusable. */
+    const veces = corrida / 8;
+    const espera = Math.round(veces * 60);
+    const det = `descarga ${bajada.toFixed(0)} s · una toma de un minuto va a tardar unos `
+              + `${espera} s · entendió «${dicho}»`;
+    if (veces > 3) {
+      marcar("modelo", "mal",
+             `Corre, pero tarda demasiado: ${espera} s por cada toma de un minuto`, det);
+      return false;
+    }
+    marcar("modelo", veces > 1 ? "duda" : "bien",
+           veces > 1 ? `Corre, y hay que esperarlo unos ${espera} s por chico`
+                     : "Se baja y corre rápido acá", det);
+    return true;
+  } catch (e) {
+    $("#extra-modelo").innerHTML = "";
+    marcar("modelo", "mal", "Se bajó pero no pudo correr en este aparato", e.message);
+    return false;
+  }
+}
+
+/* ---------------- 5. sin señal ---------------- */
+async function revisarSinSenal() {
+  marcar("sinsenal", "corriendo", "Revisando");
+  if (!("serviceWorker" in navigator) || !window.caches) {
+    marcar("sinsenal", "mal", "Este navegador no puede guardar la app para usarla sin señal");
+    return false;
+  }
+  try { await navigator.serviceWorker.register("sw.js"); } catch (e) { /* se informa abajo */ }
+  /* HAY QUE ESPERAR A QUE TERMINE DE GUARDAR, no preguntar en el momento. El service worker
+   * copia el armazón durante su instalación, que tarda: preguntando de una, en la primera
+   * visita siempre contestaba «0 de 4 archivos» y mandaba a la persona a abrir la app otra
+   * vez sin necesidad. Se le da tiempo y se vuelve a mirar. */
+  const necesarias = ["./asistente.html", "./revisar.html", "./motor.js", "./estimulos.json",
+                      "./archivo.js"];
+  const contar = async () => {
+    let n = 0;
+    for (const c of (await caches.keys()).filter(k => k.startsWith("fluidez-"))) {
+      const cache = await caches.open(c);
+      for (const url of necesarias) if (await cache.match(url)) n++;
+    }
+    return n;
+  };
+  await Promise.race([navigator.serviceWorker.ready,
+                      new Promise(r => setTimeout(r, 12000))]);
+  let guardadas = await contar();
+  for (let i = 0; i < 10 && guardadas < necesarias.length; i++) {
+    await new Promise(r => setTimeout(r, 700));
+    guardadas = await contar();
+  }
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg) {
+    marcar("sinsenal", "mal", "La app no quedó guardada", "no se registró el service worker");
+    return false;
+  }
+  if (guardadas < necesarias.length) {
+    marcar("sinsenal", "duda",
+           "La app se está guardando todavía. Volvé a abrirla una vez más con wifi",
+           `${guardadas} de ${necesarias.length} archivos guardados`);
+    return null;
+  }
+  marcar("sinsenal", "bien", "Queda guardada y abre sin señal",
+         `${necesarias.length} archivos guardados`);
+  return true;
+}
+
+/* ---------------- el veredicto ---------------- */
+function veredicto() {
+  const v = $("#veredicto");
+  const malos = CONTROLES.filter(([id]) => estado[id]?.como === "mal");
+  const dudas = CONTROLES.filter(([id]) => estado[id]?.como === "duda");
+  v.classList.remove("oculto", "bien", "mal", "duda");
+
+  if (malos.length) {
+    v.classList.add("mal");
+    $("#v-titulo").textContent = "Este equipo no sirve todavía";
+    $("#v-texto").textContent = "Falla: " + malos.map(([id, t]) => t.toLowerCase()).join("; ")
+      + ". Mandá el resumen de abajo y lo miramos.";
+  } else if (dudas.length) {
+    v.classList.add("duda");
+    $("#v-titulo").textContent = "Sirve, con una advertencia";
+    $("#v-texto").textContent = dudas.map(([id]) => estado[id].texto).join(". ") + ".";
+  } else {
+    v.classList.add("bien");
+    $("#v-titulo").textContent = "Este equipo sirve";
+    $("#v-texto").textContent = "Podés llevarlo al aula. Ya funciona sin señal.";
+  }
+
+  const resumen = [
+    "Revisión de equipo · fluidez lectora",
+    new Date().toISOString().slice(0, 16).replace("T", " "),
+    "aparato: " + navigator.userAgent,
+    ...CONTROLES.map(([id, t]) => {
+      const e = estado[id] || {};
+      const s = { bien: "OK  ", mal: "FALLA", duda: "DUDA" }[e.como] || "?   ";
+      return `${s} ${t}: ${e.texto || "sin correr"}${e.detalle ? " (" + e.detalle + ")" : ""}`;
+    }),
+  ].join("\n");
+  $("#v-resumen").textContent = resumen;
+  $("#v-resumen").classList.remove("oculto");
+  $("#btn-copiar").classList.remove("oculto");
+  $("#btn-copiar").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(resumen);
+      $("#btn-copiar").textContent = "Copiado";
+    } catch { $("#btn-copiar").textContent = "Copialo a mano de la caja de arriba"; }
+  };
+  v.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+
+$("#btn-revisar").onclick = async () => {
+  const b = $("#btn-revisar");
+  b.disabled = true;
+  b.textContent = "Revisando...";
+  $("#veredicto").classList.add("oculto");
+  pintarControles();
+  CONTROLES.forEach(([id]) => marcar(id, "pendiente", "Esperando"));
+  $("#controles").scrollIntoView({ block: "start", behavior: "smooth" });
+
+  /* EN ESTE ORDEN A PROPOSITO: primero lo que se contesta en un milisegundo, después lo que
+   * necesita a la persona, y al final los 45 MB. Si el navegador no sabe grabar, no tiene
+   * ningún sentido hacerle bajar el modelo para decírselo después. */
+  const ok = revisarNavegador();
+  if (ok) {
+    await revisarMicrofono();
+    await revisarEspacio();
+    await revisarModelo();
+    await revisarSinSenal();
+  } else {
+    ["microfono", "espacio", "modelo", "sinsenal"].forEach(
+      id => marcar(id, "duda", "No se revisó, porque antes falla el navegador"));
+  }
+
+  b.disabled = false;
+  b.textContent = "Revisar de nuevo";
+  veredicto();
+};
+</script>
+</body>
+</html>
