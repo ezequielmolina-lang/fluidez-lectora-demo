@@ -65,6 +65,18 @@ input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
   border-top:1px solid var(--line)}
 /* El reloj y el aviso, mas chicos adentro de la barra: cada pixel que ocupa es un renglon
    menos de pasaje a la vista, y el pasaje es lo que el evaluador sigue con el dedo. */
+/* EL NIVEL DE ENTRADA, mientras graba.
+ *
+ * POR QUE: una toma sale mal por dos motivos que el evaluador no puede ver. El microfono no
+ * esta captando, o el chico esta demasiado lejos. Las dos se descubren al final, cuando ya
+ * no se puede repetir con el chico sentado al lado. Una barra que se mueve contesta "¿me
+ * esta escuchando?" sin mirar ningun numero.
+ *
+ * Verde cuando el nivel alcanza, ambar cuando esta bajo. El umbral es generoso a proposito:
+ * un aviso que salta seguido se deja de mirar. */
+.nivel{height:8px;background:#e2dcce;border-radius:4px;overflow:hidden;margin:8px 0 2px}
+#nivel-in{height:100%;width:0%;background:var(--verde);transition:width .08s linear}
+#nivel-in.bajo{background:var(--gold)}
 .acciones .reloj{font-size:32px;margin:0;line-height:1}
 .acciones .aviso{font-size:12.5px;margin:4px 0 8px}
 .reloj{font:700 52px var(--mono);letter-spacing:-.04em;color:var(--ink2);text-align:center;margin:10px 0 4px}
@@ -330,6 +342,7 @@ a{color:var(--teal)}
          arriba y otro abajo, obliga a buscar un boton distinto con el chico leyendo. -->
     <div class="acciones" id="acciones-grabar">
       <div class="reloj" id="reloj">0<small> s</small></div>
+      <div class="nivel oculto" id="nivel"><div id="nivel-in"></div></div>
       <div class="aviso" id="aviso-grabar">Tocá grabar cuando el estudiante esté listo.</div>
       <button class="btn" id="btn-grabar"><span class="pt"></span><span id="btxt">Grabar</span></button>
     </div>
@@ -416,7 +429,7 @@ const CLAVE_JORNADA = "fluidez.jornada.v1";
  * `VERSION_APP` se escribe a mano y por eso puede quedar vieja. `huella_estimulos` no: es el
  * resumen del propio archivo de estimulos, calculado al abrir, asi que cambia solo el dia
  * que alguien corrige un item y es lo que de verdad identifica con que material se midio. */
-const VERSION_APP = "2026-09-17";
+const VERSION_APP = "2026-09-20";
 let huellaEstimulos = "";
 
 /* EL IDENTIFICADOR DEL EQUIPO, que no lo escribe nadie.
@@ -1088,13 +1101,63 @@ async function grabar(){
     await procesar();
   };
   rec.start(); t0 = Date.now(); tick = setInterval(reloj, 100);
+  medirNivel(stream);
   $("#btn-grabar").classList.add("rojo"); $("#btxt").textContent = "Detener";
   $("#aviso-grabar").textContent = "Grabando. Tocá detener cuando termine de leer.";
 }
 
+/* El nivel de entrada, dibujado mientras graba. La escala es logaritmica porque el oido y el
+   microfono lo son: en lineal, una voz normal mueve la barra dos pixeles. */
+let analizador = null, ctxAudio = null, cuadro = null;
+
+/* CON setInterval Y NO requestAnimationFrame: rAF no corre cuando la pestaña no esta al
+   frente, y el medidor se quedaba clavado en cero. En un telefono con la pantalla encendida
+   normalmente estaria al frente, pero apoyarse en eso para algo que tiene que seguir
+   midiendo mientras el chico lee es una apuesta sin motivo: el reloj de la toma ya usa un
+   intervalo por la misma razon. 20 por segundo alcanza y sobra para un nivel. */
+function medirNivel(stream){
+  try {
+    ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+    const fuente = ctxAudio.createMediaStreamSource(stream);
+    analizador = ctxAudio.createAnalyser();
+    analizador.fftSize = 1024;
+    fuente.connect(analizador);
+    const datos = new Float32Array(analizador.fftSize);
+    const barra = $("#nivel-in");
+    $("#nivel").classList.remove("oculto");
+    let picos = [];
+
+    const pintar = () => {
+      if (!analizador) return;
+      analizador.getFloatTimeDomainData(datos);
+      let suma = 0;
+      for (const v of datos) suma += v * v;
+      const db = 20 * Math.log10(Math.sqrt(suma / datos.length) || 1e-9);
+      // De -60 dB a -10 dB mapeado a 0-100%, que es el rango util de una voz cerca.
+      const pct = Math.max(0, Math.min(100, (db + 60) * 2));
+      barra.style.width = pct + "%";
+      picos.push(db);
+      if (picos.length > 40) picos.shift();
+      const pico = Math.max(...picos);
+      barra.classList.toggle("bajo", pico < -35);
+    };
+    pintar();
+    cuadro = setInterval(pintar, 50);
+  } catch { /* sin medidor se graba igual: es una ayuda, no un requisito */ }
+}
+
+function pararNivel(){
+  if (cuadro) clearInterval(cuadro);
+  cuadro = null; analizador = null;
+  ctxAudio?.close().catch(() => {});
+  ctxAudio = null;
+  $("#nivel").classList.add("oculto");
+  $("#nivel-in").style.width = "0%";
+}
+
 function detener(){
   if (!rec || rec.state === "inactive") return;
-  clearInterval(tick); rec.stop();
+  clearInterval(tick); rec.stop(); pararNivel();
   $("#btn-grabar").classList.remove("rojo"); $("#btn-grabar").disabled = true;
   $("#btxt").textContent = "Grabar";
   $("#aviso-grabar").textContent = "Escuchando la grabación...";
