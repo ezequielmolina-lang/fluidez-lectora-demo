@@ -1218,6 +1218,456 @@
   ]
  },
  {
+  "id": "pasaje_n1_a",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "decodificable_n1",
+  "grado": 1,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Ema",
+   "y",
+   "Ana",
+   "pasean.",
+   "El",
+   "sol",
+   "sale",
+   "y",
+   "anima",
+   "a",
+   "las",
+   "nenas.",
+   "Ema",
+   "ama",
+   "la",
+   "sopa.",
+   "Ana",
+   "ama",
+   "el",
+   "melón.",
+   "Su",
+   "mamá",
+   "les",
+   "pone",
+   "pan",
+   "en",
+   "la",
+   "mesa.",
+   "Las",
+   "nenas",
+   "se",
+   "animan."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿Quiénes pasean?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué ama Ema?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué ama Ana?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué les pone la mamá en la mesa?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que las nenas se animan?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
+  "id": "pasaje_n1_b",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "decodificable_n1",
+  "grado": 1,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Lupe",
+   "y",
+   "su",
+   "papá",
+   "pasean.",
+   "El",
+   "sol",
+   "se",
+   "pone",
+   "y",
+   "la",
+   "luna",
+   "sale.",
+   "Lupe",
+   "mima",
+   "a",
+   "su",
+   "papá.",
+   "Su",
+   "papá",
+   "ama",
+   "el",
+   "pan.",
+   "Las",
+   "palomas",
+   "suenan",
+   "en",
+   "la",
+   "loma.",
+   "Lupe",
+   "y",
+   "su",
+   "papá",
+   "se",
+   "animan."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿Con quién pasea Lupe?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué sale cuando el sol se pone?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué ama el papá?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Dónde suenan las palomas?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿En qué momento del día crees que pasean?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
+  "id": "pasaje_n2_a",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "decodificable_n2",
+  "grado": 1,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Lucas",
+   "tiene",
+   "un",
+   "pato",
+   "en",
+   "su",
+   "casa.",
+   "El",
+   "pato",
+   "se",
+   "llama",
+   "Nube.",
+   "Todas",
+   "las",
+   "tardes",
+   "Lucas",
+   "le",
+   "da",
+   "de",
+   "comer.",
+   "Un",
+   "día",
+   "Nube",
+   "no",
+   "comió",
+   "nada.",
+   "Lucas",
+   "lo",
+   "tapó",
+   "con",
+   "una",
+   "manta.",
+   "Nube",
+   "durmió",
+   "toda",
+   "la",
+   "tarde.",
+   "Al",
+   "final",
+   "Nube",
+   "se",
+   "animó",
+   "y",
+   "comió."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿Cómo se llama el pato?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Cuándo le da de comer Lucas?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué pasó un día?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué hizo Lucas cuando el pato no comió?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que Lucas lo tapó con una manta?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
+  "id": "pasaje_n2_b",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "decodificable_n2",
+  "grado": 1,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Marisol",
+   "vive",
+   "en",
+   "una",
+   "casa",
+   "con",
+   "una",
+   "parra.",
+   "Su",
+   "tío",
+   "le",
+   "dio",
+   "una",
+   "vela",
+   "rosa.",
+   "Marisol",
+   "la",
+   "puso",
+   "en",
+   "la",
+   "mesa.",
+   "La",
+   "vela",
+   "dura",
+   "toda",
+   "la",
+   "tarde.",
+   "El",
+   "sol",
+   "se",
+   "va",
+   "y",
+   "la",
+   "vela",
+   "ilumina.",
+   "Marisol",
+   "lee",
+   "un",
+   "cuento",
+   "con",
+   "su",
+   "tío."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿Qué hay en la casa de Marisol?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Quién le dio la vela?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Dónde puso la vela?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué hace Marisol con su tío?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Para qué crees que sirve la vela?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
+  "id": "pasaje_n3_a",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "decodificable_n3",
+  "grado": 2,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Todas",
+   "las",
+   "tardes",
+   "Clara",
+   "camina",
+   "desde",
+   "la",
+   "escuela",
+   "del",
+   "pueblo.",
+   "En",
+   "el",
+   "camino",
+   "ve",
+   "flores,",
+   "pájaros",
+   "y",
+   "un",
+   "perro",
+   "que",
+   "la",
+   "espera.",
+   "Su",
+   "maestra",
+   "le",
+   "lee",
+   "cuentos",
+   "nuevos.",
+   "Clara",
+   "quiere",
+   "ser",
+   "doctora",
+   "cuando",
+   "sea",
+   "grande.",
+   "Su",
+   "amiga",
+   "dice",
+   "que",
+   "va",
+   "a",
+   "ser",
+   "piloto.",
+   "Las",
+   "dos",
+   "vuelven",
+   "juntas",
+   "por",
+   "el",
+   "mismo",
+   "camino."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿Desde dónde camina Clara?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué ve en el camino?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué quiere ser Clara cuando sea grande?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué quiere ser su amiga?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que vuelven juntas?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
+  "id": "pasaje_n3_b",
+  "tarea": "pasaje",
+  "banda": "primaria",
+  "familia": "decodificable_n3",
+  "grado": 2,
+  "limite": 60,
+  "es_por_item": false,
+  "palabras": [
+   "Julio",
+   "guarda",
+   "su",
+   "bicicleta",
+   "cerca",
+   "de",
+   "la",
+   "puerta.",
+   "Cada",
+   "tarde",
+   "pedalea",
+   "con",
+   "su",
+   "prima.",
+   "Juegan",
+   "con",
+   "otros",
+   "chicos",
+   "junto",
+   "al",
+   "río.",
+   "Un",
+   "día",
+   "la",
+   "cadena",
+   "se",
+   "cortó",
+   "en",
+   "medio",
+   "de",
+   "la",
+   "calle.",
+   "Julio",
+   "la",
+   "arregló",
+   "con",
+   "la",
+   "ayuda",
+   "de",
+   "un",
+   "vecino.",
+   "Desde",
+   "entonces",
+   "revisa",
+   "la",
+   "bicicleta",
+   "cada",
+   "semana."
+  ],
+  "preguntas": [
+   {
+    "pregunta": "¿Dónde guarda Julio la bicicleta?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Con quién pedalea cada tarde?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Qué se cortó un día?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Quién lo ayudó?",
+    "tipo": "literal"
+   },
+   {
+    "pregunta": "¿Por qué crees que ahora la revisa cada semana?",
+    "tipo": "inferencial"
+   }
+  ]
+ },
+ {
   "id": "pasaje_secundaria_a",
   "tarea": "pasaje",
   "banda": "secundaria",
