@@ -287,24 +287,94 @@ export async function aFloat32_16k(blob) {
   return { audio, duracion };
 }
 
-export async function transcribir(audio) {
-  const out = await transcriptor(audio, {
-    language: "spanish",
-    task: "transcribe",
-    return_timestamps: "word",
-    chunk_length_s: 30,
-    stride_length_s: 5,
-  });
-  const palabras = [], tiempos = [];
-  for (const c of out.chunks || []) {
-    const n = normalizar(c.text);
-    if (!n) continue;
-    const [t0, t1] = c.timestamp || [null, null];
-    if (t0 === null || t1 === null) continue;
-    palabras.push(n);
-    tiempos.push([t0, t1]);
+/* EL TROCEO LO HACEMOS NOSOTROS, y no es preferencia: el de la biblioteca perdia el primer
+ * tramo entero.
+ *
+ * COMO APARECIO: el 2026-09-21 llego una grabacion de 57,5 segundos, voz infantil. El
+ * evaluador conto 85 palabras bien de 90; la aplicacion conto 35. Al reproducir el caso, la
+ * PRIMERA PALABRA que devolvia el reconocedor tenia marca de tiempo 29,98 segundos: todo lo
+ * anterior a los 30 desaparecia. El mismo audio pasado por faster-whisper en la computadora
+ * daba 62 de 90, o sea que ni el audio ni la familia de modelo eran el problema.
+ *
+ * La ventana nativa de Whisper es de 30 segundos. Pasarle `chunk_length_s` con marcas de
+ * tiempo POR PALABRA obliga a la biblioteca a unir las marcas de varios tramos, y ahi se
+ * perdia el primero. Nuestras grabaciones de hasta 35 segundos nunca fallaron, que es
+ * exactamente lo que se espera si el primer tramo se descarta.
+ *
+ * POR QUE IMPORTA MAS DE LO QUE PARECE: la grabacion se hace mas larga cuanto MAS LENTO lee
+ * el chico. O sea que el defecto golpeaba justo a los lectores que esta herramienta existe
+ * para encontrar, y en silencio: no hay error, solo un puntaje mas bajo.
+ *
+ * Cada ventana entra sola en el modelo, sin `chunk_length_s`, que es el camino que sabemos
+ * que funciona. Las marcas de tiempo se corren al tiempo absoluto y el solape se descarta. */
+const VENTANA_S = 25;        // holgado bajo los 30 nativos de Whisper
+const BUSQUEDA_S = 3;        // cuanto se corre el corte para caer en un silencio
+const MINIMA_S = 4;          // una ventana mas corta que esto se pega a la anterior
+
+/* El corte va en el punto MAS CALLADO cerca del objetivo, no en el segundo exacto.
+ *
+ * Cortar a los 25 segundos clavados parte una palabra o una frase al medio, y Whisper sin
+ * contexto devuelve basura en los bordes: al probarlo, «Cada mañana camina a la escuela con
+ * su hermano» salio «Cámonia no es una escuela conservadora». Cortando en una pausa, cada
+ * ventana es una unidad que el modelo puede leer sola. */
+export function corteEnSilencio(audio, sr, objetivoS) {
+  const marco = Math.floor(0.02 * sr);
+  const desde = Math.max(0, Math.floor((objetivoS - BUSQUEDA_S) * sr));
+  const hasta = Math.min(audio.length, Math.ceil((objetivoS + BUSQUEDA_S) * sr));
+  let mejor = Math.floor(objetivoS * sr), menor = Infinity;
+  for (let i = desde; i + marco < hasta; i += marco) {
+    let e = 0;
+    for (let k = i; k < i + marco; k++) e += audio[k] * audio[k];
+    if (e < menor) { menor = e; mejor = i + (marco >> 1); }
   }
-  return { palabras, tiempos, texto: out.text };
+  return mejor;
+}
+
+/* Los bordes de cada ventana, en muestras. Separado de `transcribir` para poder probarlo
+   sin cargar el modelo: es aritmetica, y un error de indice aca se come audio en silencio. */
+export function bordesDeVentana(audio, sr = 16000) {
+  const bordes = [0];
+  while (audio.length - bordes[bordes.length - 1] > (VENTANA_S + MINIMA_S) * sr) {
+    bordes.push(corteEnSilencio(audio, sr, bordes[bordes.length - 1] / sr + VENTANA_S));
+  }
+  bordes.push(audio.length);
+  return bordes;
+}
+
+export async function transcribir(audio, sr = 16000) {
+  const palabras = [], tiempos = [];
+  let texto = "";
+
+  /* Los bordes de cada ventana, en muestras. La ultima se estira hasta el final en vez de
+     dejar una cola corta: una ventana de dos segundos es donde Whisper mas alucina. */
+  const bordes = bordesDeVentana(audio, sr);
+
+  for (let k = 0; k < bordes.length - 1; k++) {
+    const a = bordes[k], b = bordes[k + 1];
+    const desdeS = a / sr, largoVentanaS = (b - a) / sr;
+    const out = await transcriptor(audio.subarray(a, b), {
+      language: "spanish",
+      task: "transcribe",
+      return_timestamps: "word",
+    });
+    texto += (texto ? " " : "") + (out.text || "").trim();
+
+    for (const c of out.chunks || []) {
+      const n = normalizar(c.text);
+      if (!n) continue;
+      const [t0, t1] = c.timestamp || [null, null];
+      if (t0 === null || t1 === null) continue;
+      /* UNA MARCA QUE CAE FUERA DE SU PROPIA VENTANA ES UNA ALUCINACION, no una palabra
+         leida tarde. Al probar con una grabacion de 57,5 segundos, 22 de 92 marcas daban
+         tiempos de hasta 70,88 segundos, todas en la ultima ventana y todas pegadas al mismo
+         instante: el modelo siguio generando despues de que el audio se acabo. Contarlas
+         inflaria el denominador y ensuciaria el corte del minuto. */
+      if (t1 > largoVentanaS + 0.5) continue;
+      palabras.push(n);
+      tiempos.push([desdeS + t0, desdeS + t1]);
+    }
+  }
+  return { palabras, tiempos, texto };
 }
 
 /* Camino completo: audio grabado y estimulo, adentro un resultado puntuado y marcado. */
