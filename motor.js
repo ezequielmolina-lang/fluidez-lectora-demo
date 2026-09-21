@@ -221,10 +221,147 @@ function repararResegmentacion(pares) {
   return pares;
 }
 
-/* Primero la resegmentacion, que puede convertir un tramo entero en aciertos, y despues la
- * sinalefa, que necesita que la palabra ANTERIOR ya sea acierto para heredarle el veredicto. */
+/* ------------------------------------------------------------------ acento regional
+ *
+ * POR QUE EXISTE, con el numero que lo produjo: el 2026-09-20 se midio por primera vez
+ * cuanto castiga el sistema a un chico que lee bien pero pronuncia como se habla donde
+ * vive. Palabras CORRECTAMENTE LEIDAS marcadas como error: 16% con vocales andinas
+ * ("culoris" por "colores"), 42% con caida de ese final ("lo domingo"), 50% con efe
+ * bilabial ("juerte"), contra 0,4% sin rasgo. El invariante del proyecto dice que nadie
+ * puede puntuar peor por su acento, asi que eso es un defecto.
+ *
+ * LA REGLA ES DIRECCIONAL Y CERRADA: se pregunta si el ESTIMULO puede producir lo OIDO
+ * bajo un rasgo declarado, no si las dos palabras se parecen. "colores" explica "culoris";
+ * "culoris" no explicaria "colores".
+ *
+ * LO QUE CUESTA, medido: sobre las 30.521 sustituciones de una letra posibles en los tres
+ * pasajes, la regla vuelve invisibles el 0,52%; sobre las omisiones de una letra, el 1,88%.
+ * Y hay un caso que duele: "fuego" dicho con efe bilabial es "juego", que es una palabra
+ * real. Ver docs/resultado_08_perdonar_el_acento.md.
+ *
+ * ESTO ES UN ESPEJO DE flulec/dialecto.py. Las dos implementaciones se comparan caso por
+ * caso en tests/test_dialecto_js.py: si una se toca sin la otra, el test lo dice. */
+
+export const VOC_AND = "VOC_AND";
+export const S_FIN = "S_FIN";
+export const F_BILAB = "F_BILAB";
+export const RASGOS = [VOC_AND, S_FIN, F_BILAB];
+
+const LETRAS_VOCALES = "aeiou";
+const DEBILES = "iu";
+const CON_TILDE = "\u00e1\u00e9\u00ed\u00f3\u00fa";
+const RELAJA = { e: "i", o: "u" };
+
+/* Posiciones de vocal agrupadas por nucleo silabico. Un diptongo es un solo nucleo. */
+function nucleos(palabra) {
+  const grupos = [];
+  for (let i = 0; i < palabra.length; i++) {
+    const c = palabra[i];
+    if (!LETRAS_VOCALES.includes(c)) continue;
+    const ultimo = grupos[grupos.length - 1];
+    const pegada = ultimo && ultimo[ultimo.length - 1] === i - 1;
+    if (pegada && (DEBILES.includes(palabra[i - 1]) || DEBILES.includes(c))) ultimo.push(i);
+    else grupos.push([i]);
+  }
+  return grupos;
+}
+
+function soloLetras(palabra) {
+  return [...palabra.toLowerCase().trim()].filter((c) => /\p{L}/u.test(c)).join("");
+}
+
+/* Que nucleo lleva el acento. La tilde escrita manda; si no hay, la regla regular.
+ * La puntuacion se saca primero: sin eso «Cusco.» termina en punto, la regla regular la lee
+ * como aguda y la tonica sale corrida una silaba. */
+export function indiceTonico(palabra) {
+  const baja = soloLetras(palabra);
+  const plana = baja.replace(/\u00fc/g, "u").replace(/\u00f1/g, "n")
+    .normalize("NFD").replace(/\p{Mn}/gu, "");
+  const ns = nucleos(plana);
+  if (!ns.length) return null;
+
+  const tildadas = new Set();
+  for (let i = 0; i < baja.length; i++) if (CON_TILDE.includes(baja[i])) tildadas.add(i);
+  if (tildadas.size) {
+    for (let k = 0; k < ns.length; k++) if (ns[k].some((i) => tildadas.has(i))) return k;
+  }
+  if (ns.length === 1) return 0;
+  return (LETRAS_VOCALES + "ns").includes(plana[plana.length - 1]) ? ns.length - 2 : ns.length - 1;
+}
+
+/* Vocales medias en silaba atona, que son las que el acento andino cierra. */
+function posicionesRelajables(base, display) {
+  const ns = nucleos(base);
+  const tonico = indiceTonico(display);
+  const salida = [];
+  for (let k = 0; k < ns.length; k++) {
+    if (k === tonico) continue;
+    for (const i of ns[k]) if (RELAJA[base[i]]) salida.push(i);
+  }
+  return salida;
+}
+
+/* Todas las formas que esa palabra puede tomar bajo los rasgos permitidos, con su codigo. */
+export function variantes(palabra, rasgos = RASGOS) {
+  const base = normalizar(palabra);
+  if (!base) return new Map();
+  const conTildes = soloLetras(palabra);
+  const display = conTildes.length === base.length ? conTildes : base;
+
+  const formas = new Map([[base, []]]);
+  const sumar = (forma, codigos, codigo) => {
+    if (!formas.has(forma)) formas.set(forma, [...new Set([...codigos, codigo])].sort());
+  };
+
+  if (rasgos.includes(VOC_AND)) {
+    for (const pos of posicionesRelajables(base, display).slice(0, 6)) {
+      for (const [forma, codigos] of [...formas]) {
+        sumar(forma.slice(0, pos) + RELAJA[base[pos]] + forma.slice(pos + 1), codigos, VOC_AND);
+      }
+    }
+  }
+  /* SOLO ante «u», que es el unico contexto atestiguado: sin eso la regla produce
+     «jlores» y «jrente», que no existen en ninguna variedad. */
+  if (rasgos.includes(F_BILAB) && base.startsWith("fu")) {
+    for (const [forma, codigos] of [...formas]) sumar("j" + forma.slice(1), codigos, F_BILAB);
+  }
+  if (rasgos.includes(S_FIN) && base.endsWith("s") && base.length > 2) {
+    for (const [forma, codigos] of [...formas]) {
+      sumar(forma.slice(0, -1), codigos, S_FIN);
+      sumar(forma.slice(0, -1) + "j", codigos, S_FIN);
+    }
+  }
+  formas.delete(base);
+  return formas;
+}
+
+/* Si lo oido es la referencia dicha con acento, devuelve el codigo. Si no, null. */
+export function rasgoQueExplica(referencia, oido, rasgos = RASGOS) {
+  const oidoN = normalizar(oido);
+  if (!oidoN || oidoN === normalizar(referencia)) return null;
+  const codigos = variantes(referencia, rasgos).get(oidoN);
+  return codigos ? codigos.join("+") : null;
+}
+
+/* Una palabra bien leida con acento regional no es una sustitucion. */
+export function repararAcento(pares, display, rasgos = RASGOS) {
+  for (const p of pares) {
+    if (p.op !== Op.SUSTITUCION || p.idxRef === null || p.palabraHip == null) continue;
+    if (p.idxRef >= display.length) continue;
+    const codigo = rasgoQueExplica(display[p.idxRef], p.palabraHip, rasgos);
+    if (codigo) {
+      p.op = Op.ACIERTO;
+      p.nota = `rasgo dialectal ${codigo}, no es un error de lectura`;
+    }
+  }
+  return pares;
+}
+
+/* Primero la resegmentacion, que puede convertir un tramo entero en aciertos. Despues el
+ * acento, sobre las sustituciones que quedaron. Y al final la sinalefa, que necesita que la
+ * palabra ANTERIOR ya sea acierto para heredarle el veredicto. */
 export function repararJunturas(pares, display) {
-  return aplicarSinalefa(repararResegmentacion(pares), display);
+  return aplicarSinalefa(repararAcento(repararResegmentacion(pares), display), display);
 }
 
 /* Aplica la herencia por sinalefa sobre un resultado ya alineado. */
