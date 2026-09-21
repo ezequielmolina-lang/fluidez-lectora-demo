@@ -111,7 +111,7 @@ pre.resumen{background:var(--ink2);color:#dfe6ea;border-radius:11px;padding:13px
     <p class="chico">Hacela en el mismo teléfono o tablet que vas a llevar al aula, y con
     wifi. Se bajan unos 45 MB una sola vez. Después de esto, el aparato funciona sin señal.</p>
     <p class="chico" style="margin-top:9px">Te va a pedir permiso para el micrófono y te va a
-    pedir que hables tres segundos. No se guarda nada de lo que digas.</p>
+    pedir que hables cinco segundos. No se guarda nada de lo que digas.</p>
     <button class="btn" id="btn-revisar" style="margin-top:14px">Revisar este equipo</button>
   </div>
 
@@ -185,13 +185,13 @@ function revisarNavegador() {
   const formato = FORMATOS.find(t => window.MediaRecorder?.isTypeSupported?.(t)) || "";
   if (window.MediaRecorder && !formato) falta.push("no acepta ningún formato de audio conocido");
 
+  /* El modelo del aparato NO va acá: ya está en el encabezado del resumen, y repetido dos
+     veces convierte el texto que se manda por WhatsApp en algo que nadie lee. */
   if (falta.length) {
-    marcar("navegador", "mal", "Le falta algo: " + falta.join("; "),
-           navigator.userAgent);
+    marcar("navegador", "mal", "Le falta algo: " + falta.join("; "));
     return false;
   }
-  marcar("navegador", "bien", "Graba en " + formato.split(";")[0],
-         navigator.userAgent);
+  marcar("navegador", "bien", "Graba en " + formato.split(";")[0]);
   return true;
 }
 
@@ -200,7 +200,7 @@ function revisarNavegador() {
  * entregar silencio: pasa con el AudioContext que arranca suspendido, que es exactamente el
  * defecto que tuvo esta app y que dejaba el medidor en 0% con todo lo demás en orden. */
 async function revisarMicrofono() {
-  marcar("microfono", "corriendo", "Pedí permiso al micrófono, después hablá tres segundos");
+  marcar("microfono", "corriendo", "Dale permiso al micrófono, después hablá cinco segundos");
   $("#extra-microfono").innerHTML = '<div class="nivel"><span id="nivel-in"></span></div>';
   let stream;
   try {
