@@ -63,18 +63,34 @@ export const Op = { ACIERTO: "acierto", SUSTITUCION: "sustitucion", OMISION: "om
 
 /* Needleman-Wunsch GLOBAL. Global y no local porque el puntaje necesita saber que paso con
  * CADA palabra del estimulo, incluidas las que nunca se leyeron porque se acabo el tiempo.
- * Una alineacion local las haria desaparecer del reporte en vez de marcarlas omitidas. */
+ * Una alineacion local las haria desaparecer del reporte en vez de marcarlas omitidas.
+ *
+ * LOS COSTOS NO SON TODOS 1, y el caso que los cambio es real. El 2026-09-20 se probo un
+ * lector que deletrea, "p, e, q, u, e, ñ, a" y recien despues "pequeña", que es lo que hace
+ * medio primer grado. La aplicacion le conto 7 palabras bien de 32. La palabra deletreada no
+ * era el problema: las 7 fichas de sobra DESINCRONIZABAN EL PASAJE ENTERO desde ahi, porque
+ * se alineaban como sustituciones contra las 7 palabras siguientes y todo lo de atras
+ * quedaba corrido. Con todos los costos en 1 las dos lecturas empatan (7 inserciones contra
+ * 7 sustituciones) y el desempate por diagonal elige justo la que desincroniza.
+ *
+ * Con sustitucion 3 y hueco 2 el empate desaparece, y sigue valiendo lo que tiene que valer:
+ * una palabra cambiada por otra cuesta 3, menos que borrarla y agregar otra, que cuesta 4.
+ * Medido: deletreo de 7/32 a 32/32, y la deteccion de errores reales no baja en ningun
+ * codigo. Espejo de flulec/align.py. */
+const COSTO_SUSTITUCION = 3;
+const COSTO_HUECO = 2;
+
 export function alinear(ref, hip) {
   const n = ref.length, m = hip.length;
   const D = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
-  for (let i = 1; i <= n; i++) D[i][0] = i;
-  for (let j = 1; j <= m; j++) D[0][j] = j;
+  for (let i = 1; i <= n; i++) D[i][0] = i * COSTO_HUECO;
+  for (let j = 1; j <= m; j++) D[0][j] = j * COSTO_HUECO;
   for (let i = 1; i <= n; i++)
     for (let j = 1; j <= m; j++)
       D[i][j] = Math.min(
-        D[i - 1][j - 1] + (ref[i - 1] === hip[j - 1] ? 0 : 1),
-        D[i - 1][j] + 1,
-        D[i][j - 1] + 1
+        D[i - 1][j - 1] + (ref[i - 1] === hip[j - 1] ? 0 : COSTO_SUSTITUCION),
+        D[i - 1][j] + COSTO_HUECO,
+        D[i][j - 1] + COSTO_HUECO
       );
 
   const pares = [];
@@ -82,13 +98,13 @@ export function alinear(ref, hip) {
   while (i > 0 || j > 0) {
     if (i > 0 && j > 0) {
       const igual = ref[i - 1] === hip[j - 1];
-      if (D[i][j] === D[i - 1][j - 1] + (igual ? 0 : 1)) {
+      if (D[i][j] === D[i - 1][j - 1] + (igual ? 0 : COSTO_SUSTITUCION)) {
         pares.push({ op: igual ? Op.ACIERTO : Op.SUSTITUCION, idxRef: i - 1, idxHip: j - 1,
                      palabraRef: ref[i - 1], palabraHip: hip[j - 1] });
         i--; j--; continue;
       }
     }
-    if (i > 0 && D[i][j] === D[i - 1][j] + 1) {
+    if (i > 0 && D[i][j] === D[i - 1][j] + COSTO_HUECO) {
       pares.push({ op: Op.OMISION, idxRef: i - 1, idxHip: null, palabraRef: ref[i - 1], palabraHip: null });
       i--; continue;
     }
