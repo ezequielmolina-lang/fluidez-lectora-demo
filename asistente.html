@@ -122,8 +122,17 @@ input:focus,select:focus{outline:2px solid var(--teal);outline-offset:-1px}
   font-size:14px;color:#5b4406;line-height:1.5}
 .corte-aviso b{color:#7a5a06}
 
-.marcador{display:flex;gap:10px;margin:14px 0}
-.mk{flex:1;background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+/* LAS TRES TARJETAS NO ENTRAN EN UN TELEFONO ANGOSTO, y no entraban en silencio.
+   `flex:1` deja `min-width:auto`, asi que «CORRECCIONES», que es una palabra que no se puede
+   partir, fijaba un ancho minimo mayor que el tercio disponible. Medido el 2026-09-23: en una
+   ventana de 360 px la fila media 361 dentro de un contenedor de 290, la tercera tarjeta
+   quedaba cortada y la PAGINA ENTERA se iba al desplazamiento horizontal, justo en la
+   pantalla donde el evaluador lee el puntaje.
+   Abajo de 430 px la tercera baja a su propio renglon. Tres tarjetas en fila a ese ancho no
+   entran por mas que se achique la letra: da 64 px utiles para una palabra que necesita 78. */
+.marcador{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}
+.mk{flex:1 1 0;min-width:0;background:var(--cream);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+@media(max-width:430px){.marcador .mk:nth-child(3){flex-basis:100%}}
 .mk b{display:block;font:700 27px var(--sans);color:var(--ink2);letter-spacing:-.02em}
 .mk span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
 .mk.g b{color:var(--verde)}
@@ -470,7 +479,7 @@ const CLAVE_JORNADA = "fluidez.jornada.v1";
  * `VERSION_APP` se escribe a mano y por eso puede quedar vieja. `huella_estimulos` no: es el
  * resumen del propio archivo de estimulos, calculado al abrir, asi que cambia solo el dia
  * que alguien corrige un item y es lo que de verdad identifica con que material se midio. */
-const VERSION_APP = "2026-09-21g";
+const VERSION_APP = "2026-09-23a";
 let huellaEstimulos = "";
 
 /* EL IDENTIFICADOR DEL EQUIPO, que no lo escribe nadie.
